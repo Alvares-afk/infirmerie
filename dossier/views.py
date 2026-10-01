@@ -14,6 +14,8 @@ from django.views.decorators.http import require_http_methods
 from .forms import (
     AllergieForm, BilanForm, ConsultationForm, MesureFormSet, PatientForm, SuiviForm,
 )
+from conf import settings
+
 from .audit import journaliser
 from .journalisation import Action
 from .models import Allergie, Bilan, Consultation, Mesure, Patient, Suivi
@@ -50,6 +52,7 @@ def accueil(request):
         "role": role,
         "libelle_role": LIBELLE_ROLE.get(role, "Non attribué"),
         "now": timezone.localtime(),
+        "mode_demo": settings.MODE_DEMO_HEBERGE,
         "nb_patients": patients.count(),
         "consultations_jour": Consultation.objects.filter(date=aujourdhui).count(),
         "suivis_en_retard": Suivi.objects.filter(fait=False, echeance__lt=aujourdhui).count(),
@@ -93,7 +96,8 @@ def liste_patients(request):
         )
     return render(
         request, "dossier/patients.html",
-        {"patients": patients[:100], "q": q, "nb": patients.count(), "role": role_de(request.user)},
+        {"patients": patients[:100], "q": q, "nb": patients.count(),
+         "role": role_de(request.user), "mode_demo": settings.MODE_DEMO_HEBERGE},
     )
 
 
@@ -186,8 +190,8 @@ def allergie_delete(request, pk, allergie_pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def consultation_create(request, patient_pk):
-    p = get_object_or_404(Patient, pk=patient_pk)
     exiger_clinique(request.user)
+    p = get_object_or_404(Patient, pk=patient_pk)
     form = ConsultationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         c = form.save(commit=False)
@@ -227,8 +231,8 @@ def consultation_detail(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def bilan_create(request, consultation_pk):
-    c = get_object_or_404(Consultation, pk=consultation_pk)
     exiger_clinique(request.user)
+    c = get_object_or_404(Consultation, pk=consultation_pk)
     form = BilanForm(request.POST or None)
     mesure_formset = MesureFormSet(request.POST or None, prefix="mesure")
 
@@ -363,7 +367,10 @@ def synthese_patient(request, pk):
 
     html += (
         f"<footer>Document généré le {timezone.localdate().strftime('%d/%m/%Y')} à "
-        f"{timezone.localtime().strftime('%H:%M')} — usage interne, contient des données de santé.</footer>"
+        f"{timezone.localtime().strftime('%H:%M')} — usage interne, contient des données de santé."
+        + ("<br><strong>VERSION DE DÉMONSTRATION — patients fictifs.</strong>"
+           if settings.MODE_DEMO_HEBERGE else "")
+        + "</footer>"
     )
     html += "</body></html>"
 

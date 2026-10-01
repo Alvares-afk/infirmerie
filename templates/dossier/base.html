@@ -107,6 +107,10 @@
     background: #fef2f2; border: 2px solid var(--rouge); color: #7f1d1d;
     padding: 11px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
   }
+  .bandeau-demo {
+    background: #fefce8; border: 2px solid #ca8a04; color: #713f12;
+    padding: 11px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+  }
   .vide { text-align: center; color: var(--gris); padding: 34px; font-size: 14px; }
   .chrono { border-left: 3px solid var(--bord); padding: 0 0 16px 16px; margin-left: 6px; }
   .chrono .date { font-size: 12px; color: var(--gris); margin-bottom: 3px; }
@@ -134,6 +138,13 @@
 </header>
 
 <main>
+  {% if mode_demo %}
+  <div class="bandeau-demo">
+    <strong>⚠ VERSION DE DÉMONSTRATION</strong> — cette instance est accessible
+    sur Internet et ne contient que des <strong>patients fictifs</strong>.
+    Ne saisissez aucune donnée de santé réelle.
+  </div>
+  {% endif %}
   {% if messages %}
   <ul class="messages">
     {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}

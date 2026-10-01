@@ -41,6 +41,11 @@ db.sqlite3.bak
 htmlcov/
 coverage.xml
 
+# --- Deploiement ----------------------------------------------------------
+# Genere a chaque build Vercel, jamais versionne.
+staticfiles/
+.vercel/
+
 # --- Editeurs / OS --------------------------------------------------------
 .vscode/
 .idea/

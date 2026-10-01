@@ -82,6 +82,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise sert les fichiers statiques sans serveur de fichiers :
+    # indispensable sur Vercel, où le disque n'est pas persistant.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -117,6 +120,24 @@ DATABASES = {
     }
 }
 
+# --- Base de données hébergee (Supabase, Vercel) -------------------------
+# En local : SQLite, aucune configuration.
+# En ligne : une variable DATABASE_URL est presente, et la base Postgres
+# hebergee est utilisee automatiquement. Rien d'autre a changer.
+#
+#   DATABASE_URL=postgres://user:mdp@hote:5432/base?sslmode=require
+#
+# ⚠ Cette base est accessible sur Internet. Elle ne doit contenir que des
+# patients FICTIFS. Voir le garde-fou "MODE_DEMO" plus bas.
+if os.environ.get("DATABASE_URL"):
+    import dj_database_url
+
+    DATABASES["default"] = dj_database_url.parse(
+        os.environ["DATABASE_URL"],
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
 # Passage à PostgreSQL pour la mise en production.
 # Prérequis : pip install "psycopg[binary]", puis créer la base et l'utilisateur.
 #
@@ -146,6 +167,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -176,3 +202,15 @@ CSRF_TRUSTED_ORIGINS = [
     for o in os.environ.get("INFIRMERIE_CSRF_TRUSTED", "").split(",")
     if o.strip()
 ]
+
+# --- Garde-fou : instance de démonstration ------------------------------
+# Une version déployée sur Internet est accessible à quiconque a l'URL.
+# Elle ne doit donc contenir que des patients FICTIFS.
+#
+# Ce garde-fou n'interdit pas la saisie — une demonstration figee ne sert
+# a rien — mais il rend l'instance visiblement demo : bandeau permanent,
+# mention sur les documents imprimes. Un patient reel saisi par megarde y
+# resterait, mais serait signale partout.
+MODE_DEMO_HEBERGE = bool(os.environ.get("DATABASE_URL")) and not _bool_environ(
+    "INFIRMERIE_AUTORISER_DONNEES_REELLES", False
+)

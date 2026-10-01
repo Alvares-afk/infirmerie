@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput",
+  "outputDirectory": "staticfiles",
+  "framework": null,
+  "functions": {
+    "conf/wsgi.app": {
+      "runtime": "python3.12",
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "crons": []
+}
