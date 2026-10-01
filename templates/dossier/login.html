@@ -1,0 +1,27 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Connexion — Infirmerie{% endblock %}
+{% block contenu %}
+<div style="max-width:400px;margin:60px auto">
+  <div class="carte">
+    <h1 style="font-size:19px;margin-bottom:4px">▮ Infirmerie</h1>
+    <p class="sous-titre" style="margin-bottom:20px">Accès réservé au personnel habilité</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% if form.errors %}
+      <div class="erreurs">Identifiant ou mot de passe incorrect.</div>
+      {% endif %}
+      <div class="champ">
+        <label for="id_username">Identifiant</label>
+        <input type="text" name="username" id="id_username" autofocus required>
+      </div>
+      <div class="champ">
+        <label for="id_password">Mot de passe</label>
+        <input type="password" name="password" id="id_password" required>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="bouton" style="width:100%">Se connecter</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

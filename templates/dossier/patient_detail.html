@@ -1,0 +1,120 @@
+{% extends "dossier/base.html" %}
+{% block titre %}{{ patient }} — Infirmerie{% endblock %}
+{% block contenu %}
+
+{% if allergies %}
+<div class="bandeau-alerte">
+  <strong>⚠ ALLERGIES :</strong>
+  {% for a in allergies %}{{ a.substance }} ({{ a.get_gravite_display }}{% if a.reaction %} — {{ a.reaction }}{% endif %}){% if not forloop.last %} · {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<h1>{{ patient }}</h1>
+<p class="sous-titre">
+  Dossier {{ patient.numero_dossier }} · né{{ patient }} le {{ patient.date_naissance|date:"d/m/Y" }}
+  ({{ patient.age }} ans) · médecin traitant : {{ patient.medecin_traitant|default:"non renseigné" }}
+  {% if patient.telephone %} · {{ patient.telephone }}{% endif %}
+</p>
+
+<div class="barre-actions">
+  <a href="{% url 'consultation_create' patient.pk %}" class="bouton">+ Nouvelle consultation</a>
+  <a href="{% url 'synthese_patient' patient.pk %}" class="bouton secondaire">Synthèse (PDF)</a>
+  <a href="{% url 'patient_edit' patient.pk %}" class="bouton secondaire">Modifier la fiche</a>
+  <a href="{% url 'liste_patients' %}" class="bouton secondaire">← Retour</a>
+</div>
+
+<h2>Dernier bilan de santé</h2>
+{% if dernier_bilan %}
+<div class="carte">
+  <p style="margin:0 0 8px">
+    <strong>{{ dernier_bilan.type_examen|default:"Bilan" }}</strong>
+    du {{ dernier_bilan.date|date:"d/m/Y" }}
+    {% if dernier_bilan.a_des_anomalies %}
+      <span class="etiquette etiq-haut">{{ dernier_bilan.resume.anomalies }} anomalie(s)</span>
+    {% else %}
+      <span class="etiquette etiq-normal">sans anomalie</span>
+    {% endif %}
+  </p>
+  <table>
+    <tr><th>Paramètre</th><th>Valeur</th><th>Norme</th><th>Interprétation</th></tr>
+    {% for m in dernier_bilan.mesures.all %}
+    <tr>
+      <td>{{ m.parametre }}</td>
+      <td><strong>{{ m.valeur }}</strong> {{ m.unite }}</td>
+      <td>{{ m.norme_min }} – {{ m.norme_max }}</td>
+      <td><span class="etiquette etiq-{{ m.anormalite }}">{{ m.libelle_anomalie }}</span></td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p style="margin:12px 0 0"><a href="{% url 'bilan_detail' dernier_bilan.pk %}">Détail du bilan</a></p>
+</div>
+{% else %}
+<p class="vide">Aucun bilan de santé enregistré pour ce patient.</p>
+{% endif %}
+
+<h2>Historique ({{ nb_consultations }} consultation{{ nb_consultations|pluralize }})</h2>
+{% if consultations %}
+{% for c in consultations %}
+<div class="chrono">
+  <div class="date">
+    {{ c.date|date:"d/m/Y" }}
+    {% if c.soignant %} · {{ c.soignant.get_full_name|default:c.soignant.username }}{% endif %}
+    {% if c.statut == "ouverte" %}<span class="etiquette etiq-info">ouverte</span>{% endif %}
+  </div>
+  <p style="margin:4px 0"><strong>{{ c.motif|default:"Consultation" }}</strong>
+    {% if c.diagnostic %}<br>Diagnostic : {{ c.diagnostic }}{% endif %}
+  </p>
+  <p class="aide" style="margin:2px 0">
+    {% if c.constantes %}{% for k, v in c.constantes.items %}{{ k }}: {{ v }} · {% endfor %}{% endif %}
+  </p>
+  {% if c.prescription %}<p class="aide" style="margin:2px 0">Prescription : {{ c.prescription|linebreaksbr }}</p>{% endif %}
+  {% if c.imc %}<p class="aide" style="margin:2px 0">IMC : {{ c.imc }}</p>{% endif %}
+  <p style="margin:6px 0 0">
+    <a href="{% url 'consultation_detail' c.pk %}">Détail</a>
+    {% for b in c.bilans.all %} · <a href="{% url 'bilan_detail' b.pk %}">Bilan du {{ b.date|date:"d/m/Y" }}</a>{% endfor %}
+  </p>
+</div>
+{% endfor %}
+{% else %}
+<p class="vide">Aucune consultation enregistrée.</p>
+{% endif %}
+
+<h2>Suivis</h2>
+{% if suivis %}
+<table>
+  <tr><th>Description</th><th>Échéance</th><th>État</th><th></th></tr>
+  {% for s in suivis %}
+  <tr>
+    <td>{{ s.description }}</td>
+    <td>{{ s.echeance|date:"d/m/Y" }}</td>
+    <td>
+      {% if s.fait %}<span class="etiquette etiq-normal">fait</span>
+      {% elif s.en_retard %}<span class="etiquette etiq-retard">en retard</span>
+      {% else %}<span class="etiquette etiq-info">à faire</span>{% endif %}
+    </td>
+    <td>
+      <form method="post" action="{% url 'suivi_toggle' s.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="bouton secondaire" style="padding:4px 10px;font-size:12px">
+          {% if s.fait %}Rouvrir{% else %}Marquer fait{% endif %}
+        </button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun suivi planifié.</p>
+{% endif %}
+
+<form method="post" action="{% url 'suivi_add' patient.pk %}" class="carte" style="margin-top:14px">
+  {% csrf_token %}
+  <h2 style="margin-top:0">Ajouter un suivi</h2>
+  <div class="deux-colonnes">
+    {{ suivi_form.description }}
+    <div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Échéance</label>{{ suivi_form.echeance }}</div>
+  </div>
+  <div class="barre-actions"><button type="submit" class="bouton">Ajouter</button></div>
+</form>
+
+{% endblock %}

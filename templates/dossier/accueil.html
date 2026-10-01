@@ -1,0 +1,112 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Accueil — Infirmerie{% endblock %}
+{% block contenu %}
+
+<h1>Bonjour</h1>
+<p class="sous-titre">
+  Session <strong>{{ libelle_role }}</strong> · aujourd'hui le {{ now|date:"d/m/Y" }}
+</p>
+
+<div class="grille">
+  <div class="carte">
+    <div class="valeur">{{ nb_patients }}</div>
+    <div class="libelle">Patients actifs</div>
+  </div>
+  <div class="carte">
+    <div class="valeur">{{ consultations_jour }}</div>
+    <div class="libelle">Consultations aujourd'hui</div>
+  </div>
+  <div class="carte {% if suivis_en_retard %}alerte{% endif %}">
+    <div class="valeur">{{ suivis_en_retard }}</div>
+    <div class="libelle">Suivis en retard</div>
+  </div>
+  {% if role == 'soignant' or role == 'admin' %}
+  <div class="carte {% if nb_alertes %}alerte{% endif %}">
+    <div class="valeur">{{ nb_alertes|default:0 }}</div>
+    <div class="libelle">Alertes cliniques</div>
+  </div>
+  {% endif %}
+</div>
+
+{% if role == 'secretariat' %}
+<div class="bandeau-alerte" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">
+  Vous êtes en session <strong>secrétariat</strong> : les dossiers cliniques, les constantes
+  et les résultats biologiques ne sont pas accessibles depuis ce poste.
+</div>
+{% endif %}
+
+{% if role == 'soignant' or role == 'admin' %}
+{% if alertes %}
+<h2>Points d'attention</h2>
+<table>
+  <tr>
+    <th>Patient</th><th>Motif</th><th>Détail</th><th></th>
+  </tr>
+  {% for a in alertes %}
+  <tr>
+    <td><a href="{% url 'patient_detail' a.patient.pk %}">{{ a.patient }}</a></td>
+    <td>
+      {% if a.perime %}
+        <span class="etiquette etiq-info">Bilan à renouveler</span>
+      {% else %}
+        <span class="etiquette etiq-haut">{{ a.nb }} anomalie(s)</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if a.perime %}
+        Dernier bilan : {{ a.bilan.date|date:"d/m/Y" }}
+      {% else %}
+        {% for m in a.bilan.resume.liste %}
+          <span class="etiquette etiq-{{ m.anormalite }}">{{ m.parametre }} {{ m.valeur }}</span>
+        {% endfor %}
+      {% endif %}
+    </td>
+    <td><a href="{% url 'bilan_detail' a.bilan.pk %}">Voir le bilan</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endif %}
+
+<h2>Suivis à venir</h2>
+{% if suivis_a_venir %}
+<table>
+  <tr><th>Échéance</th><th>Tâche</th><th>Patient</th></tr>
+  {% for s in suivis_a_venir %}
+  <tr>
+    <td>{{ s.echeance|date:"d/m/Y" }}
+      {% if s.en_retard %}<span class="etiquette etiq-retard">en retard</span>{% endif %}
+    </td>
+    <td>{{ s.description }}</td>
+    <td><a href="{% url 'patient_detail' s.patient.pk %}">{{ s.patient }}</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun suivi en cours.</p>
+{% endif %}
+
+<h2>Fichiers récemment créées</h2>
+{% if patients_recents %}
+<table>
+  <tr><th>Dossier</th><th>Patient</th><th>Naissance</th><th>Âge</th><th></th></tr>
+  {% for p in patients_recents %}
+  <tr>
+    <td>{{ p.numero_dossier }}</td>
+    <td><a href="{% url 'patient_detail' p.pk %}">{{ p }}</a></td>
+    <td>{{ p.date_naissance|date:"d/m/Y" }}</td>
+    <td>{{ p.age }} ans</td>
+    <td><a href="{% url 'patient_detail' p.pk %}">Ouvrir</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun patient enregistré.</p>
+{% endif %}
+
+<div class="barre-actions">
+  <a href="{% url 'patient_create' %}" class="bouton">+ Nouveau patient</a>
+  <a href="{% url 'liste_patients' %}" class="bouton secondaire">Rechercher un patient</a>
+</div>
+
+{% endblock %}

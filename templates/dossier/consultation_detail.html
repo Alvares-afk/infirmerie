@@ -1,0 +1,68 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Consultation du {{ consultation.date|date:"d/m/Y" }} — Infirmerie{% endblock %}
+{% block contenu %}
+
+{% if allergies %}
+<div class="bandeau-alerte">
+  <strong>⚠ ALLERGIES :</strong>
+  {% for a in allergies %}{{ a.substance }} ({{ a.get_gravite_display }}){% if not forloop.last %} · {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<h1>{{ patient }}</h1>
+<p class="sous-titre">
+  Consultation du {{ consultation.date|date:"d/m/Y" }}
+  {% if consultation.soignant %} · {{ consultation.soignant.get_full_name|default:consultation.soignant.username }}{% endif %}
+  · <a href="{% url 'patient_detail' patient.pk %}">voir le dossier complet</a>
+</p>
+
+{% if consultation.constantes %}
+<h2>Constantes</h2>
+<div class="grille">
+  {% for k, v in consultation.constantes.items %}
+  <div class="carte" style="padding:12px 14px">
+    <div class="valeur" style="font-size:20px">{{ v }}</div>
+    <div class="libelle">{{ k }}</div>
+  </div>
+  {% endfor %}
+  {% if imc %}
+  <div class="carte" style="padding:12px 14px">
+    <div class="valeur" style="font-size:20px">{{ imc }}</div>
+    <div class="libelle">IMC</div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<h2>Consultation</h2>
+<div class="carte">
+  {% if consultation.motif %}<p><strong>Motif :</strong> {{ consultation.motif }}</p>{% endif %}
+  {% if consultation.diagnostic %}<p><strong>Diagnostic :</strong> {{ consultation.diagnostic }}</p>{% endif %}
+  {% if consultation.observations %}<p><strong>Observations :</strong><br>{{ consultation.observations|linebreaksbr }}</p>{% endif %}
+  {% if consultation.prescription %}<p><strong>Prescription :</strong><br>{{ consultation.prescription|linebreaksbr }}</p>{% endif %}
+</div>
+
+<h2>Bilans rattachés à cette consultation</h2>
+{% if bilans %}
+<table>
+  <tr><th>Date</th><th>Type</th><th>Mesures</th><th>Interprétation</th><th></th></tr>
+  {% for b in bilans %}
+  <tr>
+    <td>{{ b.date|date:"d/m/Y" }}</td>
+    <td>{{ b.type_examen|default:"Bilan" }}</td>
+    <td>{{ b.nb_mesures }}</td>
+    <td>
+      {% if b.a_des_anomalies %}
+        <span class="etiquette etiq-haut">{{ b.resume.anomalies }} anomalie(s)</span>
+      {% else %}
+        <span class="etiquette etiq-normal">sans anomalie</span>
+      {% endif %}
+    </td>
+    <td><a href="{% url 'bilan_detail' b.pk %}">Ouvrir</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun bilan rattaché à cette consultation.</p>
+{% endif %}
+{% endblock %}

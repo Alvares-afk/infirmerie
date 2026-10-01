@@ -1,0 +1,58 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Bilan du {{ bilan.date|date:"d/m/Y" }} — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>{{ bilan.type_examen|default:"Bilan de santé" }}</h1>
+<p class="subs-titre sous-titre">
+  <a href="{% url 'patient_detail' patient.pk %}">{{ patient }}</a> ·
+  du {{ bilan.date|date:"d/m/Y" }}
+  {% if bilan.laboratoire %} · {{ bilan.laboratoire }}{% endif %}
+</p>
+
+{% if resume.anomalies %}
+<div class="bandeau-alerte">
+  <strong>⚠ {{ resume.anomalies }} valeur{{ resume.anomalies|pluralize }} hors norme
+  sur {{ resume.total }} mesure{{ resume.total|pluralize }}.</strong>
+</div>
+{% else %}
+<div class="carte" style="border-color:#bbf7d0;background:#f0fdf4;color:#166534">
+  Toutes les valeurs sont dans les normes de référence.
+</div>
+{% endif %}
+
+<div class="barre-actions">
+  <a href="{% url 'synthese_patient' patient.pk %}" class="bouton secondaire">Synthèse complète (PDF)</a>
+  <a href="{% url 'patient_detail' patient.pk %}" class="bouton secondaire">Retour au dossier</a>
+</div>
+
+<table>
+  <tr>
+    <th>Paramètre</th><th>Valeur</th><th>Référence</th><th>Interprétation</th>
+  </tr>
+  {% for m in mesures %}
+  <tr {% if m.est_anormal %}style="background:#fff6f7"{% endif %}>
+    <td><strong>{{ m.parametre }}</strong></td>
+    <td>
+      <span style="font-size:16px;font-weight:700;{% if m.est_anormal %}color:#b00020{% endif %}">
+        {{ m.valeur }}
+      </span>
+      <span class="aide">{{ m.unite }}</span>
+    </td>
+    <td>
+      {% if m.norme_min is not None and m.norme_max is not None %}
+        {{ m.norme_min }} – {{ m.norme_max }} {{ m.unite }}
+      {% else %}{{ m.reference|default:"—" }}{% endif %}
+    </td>
+    <td>
+      <span class="etiquette etiq-{{ m.anormalite }}">{{ m.libelle_anomalie }}</span>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="4" class="vide">Aucune mesure enregistrée sur ce bilan.</td></tr>
+  {% endfor %}
+</table>
+
+{% if bilan.compte_rendu %}
+<h2>Compte rendu</h2>
+<div class="carte">{{ bilan.compte_rendu|linebreaks }}</div>
+{% endif %}
+{% endblock %}

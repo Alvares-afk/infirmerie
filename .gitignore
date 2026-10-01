@@ -1,0 +1,50 @@
+# --- Donnees de sante : NE JAMAIS versionner ------------------------------
+# La base contient des dossiers patients et des resultats de biologie.
+# Elle ne doit jamais quitter la machine, meme dans un depot prive.
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.sqlite3-*
+sauvegardes/
+
+# Fichiers d'apercu generes : ils contiennent des donnees patients rendues
+apercu_*.html
+
+# --- Secrets --------------------------------------------------------------
+.env
+*.env
+!exemple.env
+secret.env
+secrets/
+
+# --- Python ---------------------------------------------------------------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+build/
+dist/
+
+# --- Django ---------------------------------------------------------------
+*.log
+db.sqlite3.bak
+
+# --- Outils ---------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# --- Editeurs / OS --------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

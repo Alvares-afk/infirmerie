@@ -1,0 +1,49 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Patients — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>Patients</h1>
+<p class="sous-titre">{{ nb }} dossier{{ nb|pluralize }} trouvé{{ nb|pluralize }}</p>
+
+<form method="get" style="margin-bottom:18px;max-width:520px">
+  <div style="display:flex;gap:8px">
+    <input type="text" name="q" value="{{ q }}" placeholder="Nom, prénom, n° de dossier, téléphone"
+           style="flex:1;padding:9px 12px;border:1px solid #cbd5e1;border-radius:7px;font-size:14px;font-family:inherit">
+    <button type="submit" class="bouton">Rechercher</button>
+    {% if q %}<a href="{% url 'liste_patients' %}" class="bouton secondaire">Effacer</a>{% endif %}
+  </div>
+</form>
+
+<div class="barre-actions">
+  <a href="{% url 'patient_create' %}" class="bouton">+ Nouveau patient</a>
+</div>
+
+{% if patients %}
+<table>
+  <tr>
+    <th>Dossier</th><th>Patient</th><th>Naissance</th><th>Âge</th>
+    <th>Téléphone</th><th>Médecin traitant</th><th></th>
+  </tr>
+  {% for p in patients %}
+  <tr>
+    <td>{{ p.numero_dossier|default:"—" }}</td>
+    <td><strong>{{ p }}</strong>
+      {% if not p.actif %}<span class="etiquette etiq-inconnu">inactif</span>{% endif %}
+    </td>
+    <td>{{ p.date_naissance|date:"d/m/Y" }}</td>
+    <td>{{ p.age }}</td>
+    <td>{{ p.telephone|default:"—" }}</td>
+    <td>{{ p.medecin_traitant|default:"—" }}</td>
+    <td>
+      {% if role == 'soignant' or role == 'admin' %}
+        <a href="{% url 'patient_detail' p.pk %}">Dossier</a>
+      {% else
+        %}<span class="etiquette etiq-info">accès soignant</span>{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="pagination-note">100 premiers résultats affichés au maximum.</p>
+{% else %}
+<p class="vide">Aucun patient ne correspond à cette recherche.</p>
+{% endif %}
+{% endblock %}

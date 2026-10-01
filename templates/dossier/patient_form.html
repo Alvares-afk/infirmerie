@@ -1,0 +1,80 @@
+{% extends "dossier/base.html" %}
+{% block titre %}{{ titre }} — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>{{ titre }}</h1>
+
+<div class="barre-actions">
+  <a href="{% url 'liste_patients' %}" class="bouton secondaire">← Retour</a>
+</div>
+
+<form method="post" class="carte">
+  {% csrf_token %}
+  {% if form.errors %}
+  <div class="erreurs">
+    <strong>Le formulaire contient des erreurs :</strong>
+    <ul>{% for f in form %}{% for e in f.errors %}<li>{{ f.label }} : {{ e }}</li>{% endfor %}{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <div class="deux-colonnes">
+    <div>
+      <div class="champ"><label for="id_nom">Nom *</label>{{ form.nom }}{% for e in form.nom.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}</div>
+      <div class="champ"><label for="id_prenom">Prénom *</label>{{ form.prenom }}{% for e in form.prenom.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}</div>
+      <div class="deux-colonnes">
+        <div class="champ"><label for="id_date_naissance">Date de naissance *</label>{{ form.date_naissance }}</div>
+        <div class="champ"><label for="id_sexe">Sexe</label>{{ form.sexe }}</div>
+      </div>
+      <div class="champ"><label for="id_telephone">Téléphone</label>{{ form.telephone }}</div>
+      <div class="champ"><label for="id_email">Email</label>{{ form.email }}</div>
+    </div>
+    <div>
+      <div class="champ"><label for="id_adresse">Adresse</label>{{ form.adresse }}</div>
+      <div class="deux-colonnes">
+        <div class="champ"><label for="id_numero_dossier">N° de dossier</label>{{ form.numero_dossier }}<div class="aide">Attribué automatiquement si laissé vide.</div></div>
+        <div class="champ"><label for="id_medecin_traitant">Médecin traitant</label>{{ form.medecin_traitant }}</div>
+      </div>
+      <div class="champ"><label for="id_notes">Notes administratives</label>{{ form.notes }}</div>
+    </div>
+  </div>
+
+  <div class="barre-actions">
+    <button type="submit" class="bouton">Enregistrer</button>
+  </div>
+</form>
+
+{% if patient %}
+<h2>Allergies connues</h2>
+{% if allergies %}
+<table>
+  <tr><th>Substance</th><th>Réaction</th><th>Gravité</th><th></th></tr>
+  {% for a in allergies %}
+  <tr>
+    <td><span class="etiquette etiq-allergie">{{ a.substance }}</span></td>
+    <td>{{ a.reaction|default:"—" }}</td>
+    <td>{{ a.get_gravite_display }}</td>
+    <td>
+      <form method="post" action="{% url 'allergie_delete' patient.pk a.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="bouton danger" style="padding:4px 10px;font-size:12px">Supprimer</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucune allergie enregistrée.</p>
+{% endif %}
+
+<form method="post" action="{% url 'allergie_add' patient.pk %}" class="carte" style="margin-top:14px">
+  {% csrf_token %}
+  <h2 style="margin-top:0">Ajouter une allergie</h2>
+  <div class="trois-colonnes">
+    {{ allergie_form.substance }}
+    {{ allergie_form.reaction }}
+    {{ allergie_form.gravite }}
+  </div>
+  <div class="barre-actions"><button type="submit" class="bouton">Ajouter</button></div>
+</form>
+{% endif %}
+
+{% endblock %}

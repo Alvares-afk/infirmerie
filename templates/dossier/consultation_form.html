@@ -1,0 +1,45 @@
+{% extends "dossier/base.html" %}
+{% block titre %}{{ titre }} — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>{{ titre }}</h1>
+<p class="sous-titre"><a href="{% url 'patient_detail' patient.pk %}">{{ patient }}</a> · dossier {{ patient.numero_dossier }}</p>
+
+{% if allergies %}
+<div class="bandeau-alerte">
+  <strong>⚠ Vérifiez les allergies avant de prescrire :</strong>
+  {% for a in allergies %}{{ a.substance }} ({{ a.get_gravite_display }}){% if not forloop.last %} · {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" class="carte">
+  {% csrf_token %}
+  {% if form.errors %}
+  <div class="erreurs"><ul>{% for f in form %}{% for e in f.errors %}<li>{{ f.label }} : {{ e }}</li>{% endfor %}{% endfor %}</ul></div>
+  {% endif %}
+
+  <div class="champ">{{ form.date.label_tag }}{{ form.date }}</div>
+
+  <h2 style="margin-top:20px">Constantes</h2>
+  <div class="trois-colonnes">
+    {{ form.tension_arterielle }}
+    {{ form.pouls }}
+    {{ form.temperature }}
+  </div>
+  <div class="trois-colonnes" style="margin-top:10px">
+    {{ form.saturation }}
+    {{ form.poids }}
+    {{ form.taille }}
+  </div>
+
+  <h2>Consultation</h2>
+  <div class="champ">{{ form.motif.label_tag }}{{ form.motif }}</div>
+  <div class="champ">{{ form.diagnostic.label_tag }}{{ form.diagnostic }}</div>
+  <div class="champ">{{ form.observations.label_tag }}{{ form.observations }}</div>
+  <div class="champ">{{ form.prescription.label_tag }}{{ form.prescription }}</div>
+
+  <div class="barre-actions">
+    <button type="submit" class="bouton">Enregistrer et saisir un bilan</button>
+    <a href="{% url 'patient_detail' patient.pk %}" class="bouton secondaire">Annuler</a>
+  </div>
+</form>
+{% endblock %}

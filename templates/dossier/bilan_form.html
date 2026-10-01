@@ -1,0 +1,57 @@
+{% extends "dossier/base.html" %}
+{% block titre %}{{ titre }} — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>{{ titre }}</h1>
+<p class="sous-titre">
+  <a href="{% url 'patient_detail' patient.pk %}">{{ patient }}</a> ·
+  consultation du {{ consultation.date|date:"d/m/Y" }}
+</p>
+
+<form method="post" class="carte">
+  {% csrf_token %}
+  {% if form.errors or mesure_formset.errors or mesure_formset.non_form_errors %}
+  <div class="erreurs">
+    <strong>Le formulaire contient des erreurs :</strong>
+    <ul>{% for f in form %}{% for e in f.errors %}<li>{{ f.label }} : {{ e }}</li>{% endfor %}{% endfor %}</ul>
+    {% for e in mesure_formset.non_form_errors %}<li>{{ e }}</li>{% endfor %}
+    {% for formset_forms in mesure_formset %}{% for e in formset_forms.errors %}<li>{{ e }}</li>{% endfor %}{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="deux-colonnes">
+    <div class="champ">{{ form.date.label_tag }}{{ form.date }}</div>
+    <div class="champ">{{ form.laboratoire.label_tag }}{{ form.laboratoire }}</div>
+  </div>
+  <div class="champ">{{ form.type_examen.label_tag }}{{ form.type_examen }}</div>
+  <div class="champ">{{ form.compte_rendu.label_tag }}{{ form.compte_rendu }}</div>
+
+  <h2>Mesures</h2>
+  <p class="aide" style="margin-bottom:10px">
+    Renseignez la norme basse et la norme haute : une valeur hors norme sera signalée automatiquement.
+    Laissez vide si la valeur n'est pas chiffrée (mention « négatif », etc.).
+  </p>
+
+  <div class="carte" style="background:#f8fafc">
+    <div class="trois-colonnes" style="font-weight:600;font-size:12px;color:#64748b;padding-bottom:6px">
+      <span>Paramètre</span><span>Valeur</span><span>Unité</span>
+    </div>
+    {% for mf in mesure_formset %}
+    <div class="trois-colonnes" style="margin-bottom:6px">
+      <div>{{ mf.parametre }}{{ mf.id }}</div>
+      <div>{{ mf.valeur }}</div>
+      <div>{{ mf.unite }}</div>
+    </div>
+    <div class="trois-colonnes" style="margin-bottom:12px">
+      <div>{{ mf.norme_min }} <span class="aide">min</span></div>
+      <div>{{ mf.norme_max }} <span class="aide">max</span></div>
+      <div>{{ mf.reference }} <span class="aide">référence</span></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="barre-actions">
+    <button type="submit" class="bouton">Enregistrer le bilan</button>
+    <a href="{% url 'patient_detail' patient.pk %}" class="bouton secondaire">Annuler</a>
+  </div>
+</form>
+{% endblock %}

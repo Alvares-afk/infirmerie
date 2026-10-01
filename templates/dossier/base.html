@@ -1,0 +1,149 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titre %}Infirmerie{% endblock %}</title>
+<style>
+  :root {
+    --vert: #0f766e; --vert-clair: #14b8a6; --rouge: #b00020;
+    --orange: #b45309; --gris: #64748b; --bord: #e2e8f0;
+    --fond: #f8fafc; --carte: #ffffff; --texte: #0f172a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    background: var(--fond); color: var(--texte); font-size: 15px;
+  }
+  a { color: var(--vert); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    background: var(--vert); color: #fff; padding: 12px 22px;
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  header .marque { font-weight: 700; font-size: 17px; letter-spacing: .3px; }
+  header nav { display: flex; gap: 16px; flex: 1; }
+  header nav a { color: #d7f5f1; font-size: 14px; }
+  header nav a:hover, header nav a.actif { color: #fff; text-decoration: underline; }
+  header .session { font-size: 13px; color: #cbeee9; display: flex; gap: 14px; align-items: center; }
+  header .badge {
+    background: rgba(255,255,255,.2); padding: 3px 10px; border-radius: 11px; font-size: 12px;
+  }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 22px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 26px 0 10px; }
+  .sous-titre { color: var(--gris); margin: 0 0 18px; font-size: 14px; }
+
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .carte {
+    background: var(--carte); border: 1px solid var(--bord);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .carte .valeur { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .carte .libelle { color: var(--gris); font-size: 13px; margin-top: 4px; }
+  .carte.alerte { border-color: var(--rouge); background: #fff6f7; }
+  .carte.alerte .valeur { color: var(--rouge); }
+
+  table {
+    width: 100%; border-collapse: collapse; background: var(--carte);
+    border: 1px solid var(--bord); border-radius: 10px; overflow: hidden;
+  }
+  th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--bord); font-size: 14px; }
+  th { background: #f1f5f9; font-weight: 600; font-size: 13px; color: #334155; }
+  tr:last-child td { border-bottom: none; }
+
+  .etiquette {
+    display: inline-block; padding: 2px 9px; border-radius: 10px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .etiq-normal { background: #dcfce7; color: #166534; }
+  .etiq-haut   { background: #fee2e2; color: #991b1b; }
+  .etiq-bas    { background: #ffedd5; color: #9a3412; }
+  .etiq-inconnu{ background: #e2e8f0; color: #475569; }
+  .etiq-allergie { background: #fee2e2; color: #991b1b; }
+  .etiq-retard { background: #fee2e2; color: #991b1b; }
+  .etiq-info { background: #e0f2fe; color: #075985; }
+
+  .bouton {
+    display: inline-block; background: var(--vert); color: #fff; padding: 9px 16px;
+    border: 0; border-radius: 7px; font-size: 14px; cursor: pointer;
+    font-family: inherit;
+  }
+  .bouton:hover { background: #0d5f59; text-decoration: none; }
+  .bouton.secondaire { background: #fff; color: var(--vert); border: 1px solid var(--vert); }
+  .bouton.danger { background: var(--rouge); }
+  .barre-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+
+  form.champ { margin-bottom: 14px; }
+  form.champ label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #334155; }
+  form.champ input, form.champ select, form.champ textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1;
+    border-radius: 6px; font-family: inherit; font-size: 14px; background: #fff;
+  }
+  form.champ input:focus, form.champ select:focus, form.champ textarea:focus {
+    outline: 2px solid var(--vert-clair); outline-offset: -1px; border-color: var(--vert);
+  }
+  .deux-colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .trois-colonnes { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; }
+  .erreurs {
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    padding: 10px 14px; border-radius: 7px; margin-bottom: 14px; font-size: 14px;
+  }
+  .erreurs ul { margin: 6px 0 0; padding-left: 20px; }
+  .aide { font-size: 12px; color: var(--gris); margin-top: 3px; }
+
+  .messages { list-style: none; padding: 0; margin: 0 0 18px; }
+  .messages li {
+    padding: 10px 14px; border-radius: 7px; margin-bottom: 8px;
+    font-size: 14px; border: 1px solid;
+  }
+  .messages .succes { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .messages .erreur { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+  .messages .info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+  .bandeau-alerte {
+    background: #fef2f2; border: 2px solid var(--rouge); color: #7f1d1d;
+    padding: 11px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+  }
+  .vide { text-align: center; color: var(--gris); padding: 34px; font-size: 14px; }
+  .chrono { border-left: 3px solid var(--bord); padding: 0 0 16px 16px; margin-left: 6px; }
+  .chrono .date { font-size: 12px; color: var(--gris); margin-bottom: 3px; }
+  .pagination-note { color: var(--gris); font-size: 13px; margin-top: 10px; }
+  footer.pied { text-align: center; color: var(--gris); font-size: 12px; padding: 26px 0; }
+</style>
+</head>
+<body>
+<header>
+  <span class="marque">▮ Infirmerie</span>
+  <nav>
+    <a href="{% url 'accueil' %}">Accueil</a>
+    <a href="{% url 'liste_patients' %}">Patients</a>
+    <a href="/admin/">Administration</a>
+  </nav>
+  <span class="session">
+    {% if user.is_authenticated %}
+      <span class="badge">{{ user.get_full_name|default:user.username }}</span>
+      <form method="post" action="{% url 'deconnexion' %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" style="background:none;border:0;color:#cbeee9;cursor:pointer;font-size:13px;font-family:inherit">Déconnexion</button>
+      </form>
+    {% endif %}
+  </span>
+</header>
+
+<main>
+  {% if messages %}
+  <ul class="messages">
+    {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% block contenu %}{% endblock %}
+</main>
+
+<footer class="pied">
+  Données de santé — accès réservé au personnel habilité. Toute consultation est journalisée.
+</footer>
+</body>
+</html>
