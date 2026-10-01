@@ -132,6 +132,23 @@ sont donc portées par la mesure, pas par un réglage global.
   renouveler
 - **Suivis en retard** : une tâche échue et non faite apparaît à l'accueil
 
+### 4.4 Point quotidien (briefing)
+
+Page regroupant ce qui ne peut pas attendre, par priorité calculée et non
+inventée :
+
+1. **Immédiat** — allergie sévère : vérifier avant toute prescription
+2. **Avant la visite** — valeur hors norme, suivi à échéance proche
+3. **À planifier** — échéance dépassée, bilan de plus de douze mois
+
+Chaque ligne est **factuelle et vérifiable** : un lien mène à la page où
+elle se vérifie. Le briefing **signale, il n'interprète pas** — aucune
+formulation d'hypothèse clinique, aucun diagnostic. Un test refuse
+explicitement les mots « probablement », « semble », « évoque ».
+
+Une mention qualitative (« négatif ») ne produit **aucune ligne** : ce n'est
+pas une anomalie, c'est une information à qualifier par le soignant.
+
 ### 4.5 Suivis
 
 Tâche avec description et échéance. Trois états : à faire, en retard, fait.

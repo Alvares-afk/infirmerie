@@ -80,6 +80,36 @@ def accueil(request):
     return render(request, "dossier/accueil.html", contexte)
 
 
+# ----------------------------------------------------------------- Briefing
+
+
+@login_required
+def briefing(request):
+    """Point quotidien : ce qui ne peut pas attendre aujourd'hui.
+
+    Réservé au soignant. La construction est faite par briefing.py, la vue
+    ne fait que rendre — la logique de priorisation est testable seule.
+    """
+    exiger_clinique(request.user)
+
+    from .briefing import briefing_du_jour
+
+    data = briefing_du_jour()
+
+    journaliser(request, Action.LECTURE, objet="briefing du jour",
+                details=f"{data['nb_lignes']} lignes, "
+                        f"{len(data['immediats'])} immediat(s)")
+
+    return render(
+        request, "dossier/briefing.html",
+        {
+            **data,
+            "mode_demo": settings.MODE_DEMO_HEBERGE,
+            "date_lisible": data["date"].strftime("%A %d %B %Y").capitalize(),
+        },
+    )
+
+
 # ----------------------------------------------------------------- Patients
 
 

@@ -1,0 +1,85 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Point quotidien — Infirmerie{% endblock %}
+{% block contenu %}
+
+<h1>Point quotidien</h1>
+<p class="sous-titre">
+  {{ date_lisible }} · {{ nb_patients_concernes }} patient{{ nb_patients_concernes|pluralize }}
+  à connaître · {{ consultations_du_jour }} consultation{{ consultations_du_jour|pluralize }} aujourd'hui
+</p>
+
+<div class="barre-actions">
+  <a href="#" onclick="window.print()" class="bouton secondaire">Imprimer</a>
+  <a href="{% url 'accueil' %}" class="bouton secondaire">← Accueil</a>
+</div>
+
+{% if nb_lignes == 0 %}
+<p class="vide">
+  Aucun point d'attention aujourd'hui. {{ patients_sans_rien }} patient{{ patients_sans_rien|pluralize }}
+  sans élément à signaler.
+</p>
+{% else %}
+
+{% if immediats %}
+<h2 style="color:#b00020">⚠ Immédiat ({{ immediats|length }})</h2>
+<p class="aide" style="margin:-4px 0 8px">Allergies sévères : vérifier avant toute prescription.</p>
+<table>
+  <tr><th>Patient</th><th>Point d'attention</th><th>Détail</th><th></th></tr>
+  {% for l in immediats %}
+  <tr style="background:#fff6f7">
+    <td><a href="{% url 'patient_detail' l.patient.pk %}"><strong>{{ l.patient }}</strong></a><br>
+        <span class="aide">{{ l.patient.numero_dossier }}</span></td>
+    <td>{{ l.titre }}</td>
+    <td>{{ l.detail }}</td>
+    <td><a href="{{ l.source }}">Vérifier</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if hauts %}
+<h2 style="color:#b45309">Avant la visite ({{ hauts|length }})</h2>
+<p class="aide" style="margin:-4px 0 8px">
+  Valeurs hors norme et suivis à échéance proche.
+  Les valeurs sont signalées, pas interprétées.
+</p>
+<table>
+  <tr><th>Patient</th><th>Point d'attention</th><th>Détail</th><th></th></tr>
+  {% for l in hauts %}
+  <tr>
+    <td><a href="{% url 'patient_detail' l.patient.pk %}"><strong>{{ l.patient }}</strong></a><br>
+        <span class="aide">{{ l.patient.numero_dossier }}</span></td>
+    <td>{{ l.titre }}</td>
+    <td>{{ l.detail }}</td>
+    <td><a href="{{ l.source }}">Vérifier</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if normaux %}
+<h2>À planifier ({{ normaux|length }})</h2>
+<p class="aide" style="margin:-4px 0 8px">Échéances dépassées et bilans à renouveler.</p>
+<table>
+  <tr><th>Patient</th><th>Point d'attention</th><th>Détail</th><th></th></tr>
+  {% for l in normaux %}
+  <tr>
+    <td><a href="{% url 'patient_detail' l.patient.pk %}"><strong>{{ l.patient }}</strong></a><br>
+        <span class="aide">{{ l.patient.numero_dossier }}</span></td>
+    <td>{{ l.titre }}</td>
+    <td>{{ l.detail }}</td>
+    <td><a href="{{ l.source }}">Vérifier</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<div class="bandeau-alerte" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">
+  <strong>Ce briefing est une aide, pas une décision.</strong>
+  Chaque ligne est un élément vérifiable dans l'application. Aucune
+  interprétation clinique n'y est formulée : les valeurs sont signalées
+  telles quelles, et les conclusions restent au personnel soignant.
+</div>
+{% endif %}
+
+{% endblock %}
