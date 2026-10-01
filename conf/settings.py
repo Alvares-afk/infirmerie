@@ -120,6 +120,17 @@ DATABASES = {
     }
 }
 
+# --- Choix de la base ----------------------------------------------------
+# Deux bases coexistent : celle de démonstration (patients fictifs) et celle
+# des vrais dossiers. Voir conf/bases.py.
+#   set INFIRMERIE_BASE=reelle
+try:
+    from conf.bases import BASE_UTILISEE, est_base_reelle
+
+    DATABASES["default"]["NAME"] = BASE_UTILISEE
+except Exception:  # pragma: no cover - repli sur la base par défaut
+    est_base_reelle = lambda: False
+
 # --- Base de données hébergee (Supabase, Vercel) -------------------------
 # En local : SQLite, aucune configuration.
 # En ligne : une variable DATABASE_URL est presente, et la base Postgres

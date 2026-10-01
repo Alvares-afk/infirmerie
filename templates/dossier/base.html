@@ -138,6 +138,13 @@
 </header>
 
 <main>
+  {% if base_reelle %}
+  <div class="bandeau-demo" style="background:#fef2f2;border-color:#dc2626;color:#7f1d1d">
+    <strong>⚠ BASE DE DONNÉES RÉELLE</strong> — ce poste contient de vrais
+    dossiers patients. Les données de démonstration sont dans une base
+    séparée.
+  </div>
+  {% endif %}
   {% if mode_demo %}
   <div class="bandeau-demo">
     <strong>⚠ VERSION DE DÉMONSTRATION</strong> — cette instance est accessible

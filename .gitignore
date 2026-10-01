@@ -1,8 +1,10 @@
 # --- Donnees de sante : NE JAMAIS versionner ------------------------------
-# La base contient des dossiers patients et des resultats de biologie.
-# Elle ne doit jamais quitter la machine, meme dans un depot prive.
+# Les bases contiennent des dossiers patients et des résultats de biologie.
+# Elles ne doivent jamais quitter la machine, meme dans un dépôt privé.
 db.sqlite3
 db.sqlite3-journal
+db_reelle.sqlite3
+db_reelle.sqlite3-journal
 *.sqlite3
 *.sqlite3-*
 sauvegardes/

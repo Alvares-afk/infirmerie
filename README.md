@@ -5,9 +5,20 @@ Application locale (Django + SQLite), prévue pour un poste Windows.
 
 ## Démarrer
 
-Double-cliquer sur **`demarrer.bat`**, puis ouvrir <http://127.0.0.1:8000>
+**Deux bases de données, deux lanceurs.** Elles ne partagent rien : une
+erreur sur la démonstration ne peut pas atteindre vos vrais dossiers.
 
-### Comptes de démonstration
+| Lanceur | Base | Contenu |
+|---|---|---|
+| **`demarrer_reel.bat`** | `db_reelle.sqlite3` | **Vos vrais dossiers patients** |
+| `demarrer_demo.bat` | `db.sqlite3` | Patients fictifs, pour essayer |
+
+Puis <http://127.0.0.1:8000>
+
+Un bandeau rouge en haut de chaque page indique en permanence quelle base est
+ouverte. En cas de doute, la réponse est visible à l'écran.
+
+### Comptes
 
 | Rôle | Identifiant | Mot de passe |
 |---|---|---|
@@ -57,17 +68,22 @@ transmettre à un spécialiste.
 
 ## Sauvegarde
 
-Double-cliquer sur **`sauvegarder.bat`**. Les 30 dernières sauvegardes sont
-conservées dans `sauvegardes/`.
+**Les deux bases se sauvegardent séparément.** Deux lanceurs :
 
-Restauration :
-```
-python sauvegarder.py --restaurer sauvegardes/infirmerie_2026-09-30_101500.db
-```
+| Fichier | Sauvegarde |
+|---|---|
+| `sauvegarder_reel.bat` | **les vrais dossiers patients** |
+| `sauvegarder.bat` | la démonstration |
+
+Les fichiers de sauvegarde sont préfixés (`reel_`, `demo_`) et les 30
+derniers de chaque base sont conservés.
+
+**Une restauration ne franchit jamais les deux bases** : restaurer une
+sauvegarde de démonstration dans la base des vrais dossiers est refusé. Une
+base courante est toujours archivée avant remplacement.
 
 À faire régulièrement, et copier une sauvegarde sur une clé USB : une
 sauvegarde restée sur le même disque ne protège pas d'une panne de disque.
-À tester une fois : restaurer pour de vrai, pour vérifier que ça marche.
 
 ## Accès distant
 

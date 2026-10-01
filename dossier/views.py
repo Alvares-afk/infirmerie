@@ -15,6 +15,7 @@ from .forms import (
     AllergieForm, BilanForm, ConsultationForm, MesureFormSet, PatientForm, SuiviForm,
 )
 from conf import settings
+from conf.bases import est_base_reelle
 
 from .audit import journaliser
 from .journalisation import Action
@@ -53,6 +54,7 @@ def accueil(request):
         "libelle_role": LIBELLE_ROLE.get(role, "Non attribué"),
         "now": timezone.localtime(),
         "mode_demo": settings.MODE_DEMO_HEBERGE,
+        "base_reelle": est_base_reelle(),
         "nb_patients": patients.count(),
         "consultations_jour": Consultation.objects.filter(date=aujourdhui).count(),
         "suivis_en_retard": Suivi.objects.filter(fait=False, echeance__lt=aujourdhui).count(),
