@@ -110,6 +110,123 @@ def briefing(request):
     )
 
 
+# ----------------------------------------------------------------- Relances
+
+
+@login_required
+def liste_relances(request):
+    """File des relances en attente de validation.
+
+    ⚠ Cette page ne peut RIEN envoyer. Elle affiche des brouillons et
+    permet de les valider ou de les abandonner. L'envoi se fait ensuite,
+    par le canal habituel de l'infirmerie.
+    """
+    exiger_clinique(request.user)
+
+    from .models import Relance, StatutRelance
+
+    statut = request.GET.get("statut", StatutRelance.BROUILLON)
+
+    relances = Relance.objects.select_related("patient", "validee_par")
+    if statut != "tous":
+        relances = relances.filter(statut=statut)
+
+    compteurs = {
+        s: Relance.objects.filter(statut=s).count()
+        for s, _ in StatutRelance.choices
+    }
+
+    return render(
+        request, "dossier/relances.html",
+        {
+            "relances": relances[:100],
+            "statut": statut,
+            "compteurs": compteurs,
+            "statuts": StatutRelance,
+            "mode_demo": settings.MODE_DEMO_HEBERGE,
+            "nb_total": Relance.objects.count(),
+        },
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def relance_generer(request, patient_pk=None):
+    """Rédige les relances justifiées. Ne crée que ce qui a un motif."""
+    exiger_clinique(request.user)
+
+    from .relances import proposer_relances, proposer_relances_global
+    from .models import Patient
+
+    if patient_pk:
+        patient = get_object_or_404(Patient, pk=patient_pk)
+        creees = proposer_relances(patient)
+        message = (
+            f"{len(creees)} relance(s) rédigée(s) pour {patient}."
+            if creees else
+            f"Aucune relance justifiée pour {patient} — rien à signaler."
+        )
+    else:
+        creees = proposer_relances_global()
+        message = (
+            f"{len(creees)} relance(s) rédigée(s) sur l'ensemble des patients."
+            if creees else
+            "Aucune relance justifiée : toutes les échéances sont à jour."
+        )
+
+    journaliser(request, Action.CREATION, objet="relances",
+                details=message[:200])
+    messages.success(request, message)
+    return redirect("liste_relances")
+
+
+@login_required
+@require_http_methods(["POST"])
+def relance_valider(request, pk):
+    """Validation humaine d'un brouillon. C'est le seul passage d'état."""
+    exiger_clinique(request.user)
+
+    from .models import Relance, StatutRelance
+
+    relance = get_object_or_404(Relance, pk=pk)
+    if relance.statut != StatutRelance.BROUILLON:
+        messages.error(request, "Cette relance a déjà été traitée.")
+        return redirect("liste_relances")
+
+    relance.statut = StatutRelance.VALIDEE
+    relance.validee_par = request.user
+    relance.validee_le = timezone.now()
+    relance.save()
+
+    journaliser(request, Action.MODIFICATION, patient=relance.patient,
+                objet="relance validee", details=relance.objet)
+    messages.success(
+        request,
+        f"Relance validée : « {relance.objet} ». "
+        "Elle reste à envoyer — cette application n'envoie rien.",
+    )
+    return redirect("liste_relances")
+
+
+@login_required
+@require_http_methods(["POST"])
+def relance_abandonner(request, pk):
+    """Abandon d'un brouillon. L'information reste tracée, elle n'est pas
+    supprimée : savoir qu'une relance a été refusée est utile."""
+    exiger_clinique(request.user)
+
+    from .models import Relance, StatutRelance
+
+    relance = get_object_or_404(Relance, pk=pk)
+    relance.statut = StatutRelance.ABANDONNEE
+    relance.save()
+
+    journaliser(request, Action.MODIFICATION, patient=relance.patient,
+                objet="relance abandonnee", details=relance.objet)
+    messages.info(request, f"Relance abandonnée : « {relance.objet} ».")
+    return redirect("liste_relances")
+
+
 # ----------------------------------------------------------------- Patients
 
 

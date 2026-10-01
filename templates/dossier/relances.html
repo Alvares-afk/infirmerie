@@ -1,0 +1,108 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Relances — Infirmerie{% endblock %}
+{% block contenu %}
+
+<h1>Relances</h1>
+<p class="sous-titre">
+  {{ nb_total }} relance{{ nb_total|pluralize }} au total
+</p>
+
+<div class="bandeau-alerte" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">
+  <strong>Cette application n'envoie rien.</strong>
+  Elle rédige des brouillons à partir de faits présents dans le dossier.
+  Vous validez ou abandonnez ; l'envoi se fait ensuite, par votre canal
+  habituel. Aucune relance ne partira sans validation humaine.
+</div>
+
+<form method="post" action="{% url 'relance_generer' %}" style="margin-bottom:16px">
+  {% csrf_token %}
+  <button type="submit" class="bouton">Rédiger les relances justifiées</button>
+  <span class="aide" style="margin-left:12px">
+    Parcourt tous les patients et ne rédige que ce qui a un motif.
+  </span>
+</form>
+
+<div class="barre-actions">
+  <a href="{% url 'liste_relances' %}?statut=brouillon"
+     class="bouton {% if statut == 'brouillon' %}secondaire{% endif %}">
+    En attente ({{ compteurs.brouillon }})
+  </a>
+  <a href="{% url 'liste_relances' %}?statut=validee"
+     class="bouton {% if statut == 'validee' %}secondaire{% endif %}">
+    Validées ({{ compteurs.validee }})
+  </a>
+  <a href="{% url 'liste_relances' %}?statut=envoyee"
+     class="bouton {% if statut == 'envoyee' %}secondaire{% endif %}">
+    Envoyées ({{ compteurs.envoyee }})
+  </a>
+  <a href="{% url 'liste_relances' %}?statut=abandonnee"
+     class="bouton {% if statut == 'abandonnee' %}secondaire{% endif %}">
+    Abandonnées ({{ compteurs.abandonnee }})
+  </a>
+</div>
+
+{% if relances %}
+  {% for r in relances %}
+  <div class="carte" style="margin-bottom:14px">
+    <p style="margin:0 0 4px">
+      <span class="etiquette etiq-info">{{ r.get_type_relance_display }}</span>
+      {% if r.statut == 'brouillon' %}
+        <span class="etiquette etiq-haut">En attente de validation</span>
+      {% elif r.statut == 'validee' %}
+        <span class="etiquette etiq-normal">Validée — à envoyer</span>
+      {% elif r.statut == 'abandonnee' %}
+        <span class="etiquette etiq-inconnu">Abandonnée</span>
+      {% endif %}
+      <span class="aide" style="margin-left:8px">rédigée le {{ r.redigee_le|date:"d/m/Y à H:i" }}</span>
+    </p>
+
+    <h3 style="margin:8px 0 2px;font-size:16px">{{ r.objet }}</h3>
+    <p class="aide" style="margin:0 0 8px">
+      Patient : <a href="{% url 'patient_detail' r.patient.pk %}">{{ r.patient }}</a>
+      ({{ r.patient.numero_dossier }})
+    </p>
+
+    {% if r.motif %}
+    <p style="background:#f8fafc;border-left:3px solid #cbd5e1;padding:8px 12px;margin:0 0 10px;font-size:14px">
+      <strong>Motif :</strong> {{ r.motif }}
+    </p>
+    {% endif %}
+
+    <details>
+      <summary style="cursor:pointer;font-size:14px;color:#0f766e">Voir le message rédigé</summary>
+      <pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px;margin-top:8px;white-space:pre-wrap;font-family:inherit;font-size:14px">{{ r.corps }}</pre>
+    </details>
+
+    {% if r.validee_par %}
+      <p class="aide" style="margin-top:10px">
+        Validée par {{ r.validee_par.get_full_name|default:r.validee_par.username }}
+        le {{ r.validee_le|date:"d/m/Y à H:i" }}
+      </p>
+    {% endif %}
+
+    {% if r.statut == 'brouillon' %}
+    <div class="barre-actions" style="margin-bottom:0">
+      <form method="post" action="{% url 'relance_valider' r.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="bouton">Valider</button>
+      </form>
+      <form method="post" action="{% url 'relance_abandonner' r.pk %}" style="margin:0">
+        {% csrf_token %}
+        <button type="submit" class="bouton secondaire">Abandonner</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="vide">
+    {% if statut == 'brouillon' %}
+      Aucune relance en attente. Cliquez sur « Rédiger les relances justifiées »
+      pour faire le point.
+    {% else %}
+      Aucune relance dans cet état.
+    {% endif %}
+  </p>
+{% endif %}
+
+{% endblock %}

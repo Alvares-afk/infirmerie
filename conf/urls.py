@@ -17,6 +17,11 @@ urlpatterns = [
     path("", views.accueil, name="accueil"),
     path("briefing/", views.briefing, name="briefing"),
 
+    path("relances/", views.liste_relances, name="liste_relances"),
+    path("relances/generer/", views.relance_generer, name="relance_generer"),
+    path("relances/<int:pk>/valider/", views.relance_valider, name="relance_valider"),
+    path("relances/<int:pk>/abandonner/", views.relance_abandonner, name="relance_abandonner"),
+
     path("patients/", views.liste_patients, name="liste_patients"),
     path("patients/nouveau/", views.patient_create, name="patient_create"),
     path("patients/<int:pk>/", views.patient_detail, name="patient_detail"),

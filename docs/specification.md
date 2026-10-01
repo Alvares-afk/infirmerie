@@ -149,7 +149,31 @@ explicitement les mots « probablement », « semble », « évoque ».
 Une mention qualitative (« négatif ») ne produit **aucune ligne** : ce n'est
 pas une anomalie, c'est une information à qualifier par le soignant.
 
-### 4.5 Suivis
+### 4.5 Relances
+
+Relances rédigées par l'agent à partir de **faits vérifiables** du dossier :
+suivi échu, bilan de plus de douze mois, aucune consultation, longue absence.
+
+**Rien n'est envoyé automatiquement.** C'est une règle de la spec LAB 04,
+appliquée strictement :
+
+- une relance rédigée est un **brouillon**
+- seule une **validation humaine** la fait passer à « validée — à envoyer »
+- l'envoi se fait ensuite, par le canal habituel de l'infirmerie
+- un test échoue si un seul appel réseau (`requests`, `smtplib`,
+  `send_mail`…) apparaît dans le module de rédaction : il faudra supprimer ce
+  test — sciemment — pour enfreindre la règle
+
+**Aucune relance sans motif.** Le motif est enregistré avec la relance, en
+termes factuels (« échéance du 26/08, 4 jours de retard »). Une relance non
+justifiée est du bruit, et le bruit fait ignorer les relances utiles. Les
+tests vérifient aussi que toute date citée dans un message existe réellement
+dans le dossier.
+
+Abandonner une relance ne la supprime pas : le statut passe à « abandonnée ».
+Savoir qu'une relance a été refusée est une information.
+
+### 4.6 Suivis
 
 Tâche avec description et échéance. Trois états : à faire, en retard, fait.
 

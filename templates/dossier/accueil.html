@@ -107,6 +107,7 @@
 <div class="barre-actions">
   {% if role == 'soignant' or role == 'admin' %}
   <a href="{% url 'briefing' %}" class="bouton">Point quotidien</a>
+  <a href="{% url 'liste_relances' %}" class="bouton secondaire">Relances</a>
   {% endif %}
   <a href="{% url 'patient_create' %}" class="bouton secondaire">+ Nouveau patient</a>
   <a href="{% url 'liste_patients' %}" class="bouton secondaire">Rechercher un patient</a>

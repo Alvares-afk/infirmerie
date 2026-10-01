@@ -276,3 +276,80 @@ class Suivi(models.Model):
     def en_retard(self):
         from datetime import date
         return bool(self.echeance and not self.fait and self.echeance < date.today())
+
+
+# ------------------------------------------------------------------ Relances
+
+
+class TypeRelance(models.TextChoices):
+    SOIN = "soin", "Relance de soin"
+    VACCIN = "vaccin", "Rappel de vaccin"
+    BILAN = "bilan", "Bilan à refaire"
+    ADMIN = "administratif", "Rappel administratif"
+
+
+class StatutRelance(models.TextChoices):
+    BROUILLON = "brouillon", "En attente de validation"
+    VALIDEE = "validee", "Validée — à envoyer"
+    ENVOYEE = "envoyee", "Envoyée"
+    ABANDONNEE = "abandonnee", "Abandonnée"
+
+
+class Relance(models.Model):
+    """Une relance rédigée par l'agent, en attente de validation humaine.
+
+    ⚠ Cette application n'envoie RIEN. Elle rédige des brouillons ; la
+    validation puis l'envoi restent des décisions humaines. Un champ
+    « envoyée » documenterait un envoi fait ailleurs, jamais une action
+    automatique : c'est ce qui distingue cet outil d'un automate.
+    """
+
+    patient = models.ForeignKey(
+        "Patient", on_delete=models.CASCADE, related_name="relances", verbose_name="patient"
+    )
+    type_relance = models.CharField(
+        "type", max_length=20, choices=TypeRelance.choices, default=TypeRelance.SOIN
+    )
+
+    objet = models.CharField("objet", max_length=200)
+    corps = models.TextField("message rédigé")
+    motif = models.TextField(
+        "pourquoi cette relance", blank=True,
+        help_text="Ce qui a déclenché la proposition, en termes factuels",
+    )
+
+    statut = models.CharField(
+        "statut", max_length=20, choices=StatutRelance.choices, default=StatutRelance.BROUILLON
+    )
+
+    # Traçabilité de la validation humaine
+    redigee_le = models.DateTimeField("rédigée le", auto_now_add=True)
+    validee_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="relances_validees", verbose_name="validée par",
+    )
+    validee_le = models.DateTimeField("validée le", null=True, blank=True)
+    envoyee_le = models.DateTimeField("envoyée le", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "relance"
+        verbose_name_plural = "relances"
+        ordering = ["-redigee_le"]
+        indexes = [models.Index(fields=["statut", "-redigee_le"])]
+
+    def __str__(self):
+        return f"{self.get_type_relance_display()} — {self.patient} — {self.objet}"
+
+    @property
+    def est_envoyee_automatiquement(self):
+        """Toujours faux. Ce champ existe pour le dire dans le code."""
+        return False
+
+    @property
+    def peut_etre_validee(self):
+        return self.statut == StatutRelance.BROUILLON
+
+    @property
+    def age_jours(self):
+        return (timezone.now() - self.redigee_le).days
