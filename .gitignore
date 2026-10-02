@@ -17,6 +17,7 @@ apercu_*.html
 *.env
 !exemple.env
 secret.env
+secret.env.*
 secrets/
 
 # --- Python ---------------------------------------------------------------
@@ -55,3 +56,5 @@ staticfiles/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+.vercel
