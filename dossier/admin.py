@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from .journalisation import JournalAcces
-from .models import Allergie, Bilan, Consultation, Mesure, Patient, Suivi
+from .models import (
+    Allergie, Bilan, Consultation, Laboratoire, Mesure, Patient, ReferenceIntervalle, Suivi,
+)
 
 
 class MesureInline(admin.TabularInline):
@@ -58,6 +60,37 @@ class SuiviAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Allergie)
+
+
+@admin.register(Laboratoire)
+class LaboratoireAdmin(admin.ModelAdmin):
+    list_display = ("nom", "actif", "valide_par", "date_validation", "nb_references")
+    search_fields = ("nom",)
+    list_filter = ("actif",)
+
+
+@admin.register(ReferenceIntervalle)
+class ReferenceIntervalleAdmin(admin.ModelAdmin):
+    list_display = (
+        "libelle", "code", "laboratoire", "unite",
+        "norme_min", "norme_max", "sexe", "date_debut",
+    )
+    list_filter = ("laboratoire", "sexe")
+    search_fields = ("libelle", "code")
+
+    def save_model(self, request, obj, form, change):
+        """Toute création ou modification est signée.
+
+        Une fourchette non validée est indiscernable d'une fourchette
+        approuvée par un biologiste. On note donc qui l'a touchée, et quand.
+        """
+        if not obj.valide_par:
+            u = request.user
+            obj.valide_par = u.get_full_name() or u.get_username()
+        if obj.date_validation is None:
+            from django.utils import timezone
+            obj.date_validation = timezone.localdate()
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(JournalAcces)

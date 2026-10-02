@@ -9,8 +9,105 @@ permet de répondre à "quel était son bilan au 12 mars ?".
 """
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+
+
+class Laboratoire(models.Model):
+    """Un laboratoire de référence.
+
+    Les fourchettes ne sont pas universelles : elles dépendent de la
+    méthode d'analyse et de l'appareil. Elles sont donc rattachées à un
+    laboratoire nommé, jamais codées en dur dans l'application.
+
+    Une fourchette est *signée* : `valide_par` et `date_validation`
+    disent qui l'a validée et quand. Sans ça, une référence saisie par
+    erreur serait indiscernable d'une référence validée par un biologiste.
+    """
+
+    nom = models.CharField("nom du laboratoire", max_length=200)
+    description = models.TextField("description", blank=True)
+    actif = models.BooleanField("actif", default=True)
+
+    valide_par = models.CharField("références validées par", max_length=150, blank=True)
+    date_validation = models.DateField("validées le", null=True, blank=True)
+
+    cree_le = models.DateTimeField("créé le", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "laboratoire"
+        verbose_name_plural = "laboratoires"
+        ordering = ["nom"]
+
+    def __str__(self):
+        return self.nom
+
+    def nb_references(self):
+        return self.intervalles.count()
+
+
+class ReferenceIntervalle(models.Model):
+    """Une fourchette de référence, pour un paramètre et un contexte donnés.
+
+    Le contexte est ce qui distingue une fourchette d'une autre : le
+    sexe, l'âge, la période de validité. Un paramètre peut ainsi avoir
+    plusieurs intervalles sans qu'aucun ne soit « le bon » par défaut —
+    la résolution se fait par priorité explicite, jamais par écrasement.
+    """
+
+    laboratoire = models.ForeignKey(
+        Laboratoire, on_delete=models.CASCADE, related_name="intervalles",
+        verbose_name="laboratoire",
+    )
+
+    code = models.CharField("code", max_length=30, db_index=True)
+    libelle = models.CharField("libellé", max_length=200)
+    unite = models.CharField("unité", max_length=30, blank=True)
+
+    norme_min = models.FloatField("norme basse", null=True, blank=True)
+    norme_max = models.FloatField("norme haute", null=True, blank=True)
+
+    # Contexte de validité
+    sexe = models.CharField(
+        "sexe", max_length=1, default="",
+        help_text="H, F, M = tous les sexes, vide = tous",
+    )
+    age_min = models.IntegerField("âge min (années)", null=True, blank=True)
+    age_max = models.IntegerField("âge max (années)", null=True, blank=True)
+
+    # Période de validité : une fourchette abrogée reste consultable, pour
+    # pouvoir démontrer ce qui s'appliquait à la date d'un soin.
+    date_debut = models.DateField("en vigueur depuis", null=True, blank=True)
+    date_fin = models.DateField("abrogée le", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "fourchette de référence"
+        verbose_name_plural = "fourchettes de référence"
+        ordering = ["laboratoire", "libelle"]
+        indexes = [models.Index(fields=["code", "sexe", "age_min", "age_max"])]
+
+    def __str__(self):
+        return f"{self.libelle} [{self.sexe or 'T'}] {self.norme_min}–{self.norme_max} {self.unite}"
+
+    @property
+    def est_applicable(self):
+        """Une fourchette sans borne haute ET sans borne basse ne sert à rien."""
+        return self.norme_min is not None or self.norme_max is not None
+
+    def contient(self, valeur):
+        """Compare une valeur. Ne conclut que si les deux bornes sont là.
+
+        Une seule borne ne permet pas de conclure « normal » : un minimum
+        sans maximum ne dit rien sur un résultat élevé.
+        """
+        if self.norme_min is None or self.norme_max is None:
+            return None
+        if valeur < self.norme_min:
+            return "bas"
+        if valeur > self.norme_max:
+            return "haut"
+        return "normal"
 
 
 class Sexe(models.TextChoices):
