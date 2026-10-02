@@ -136,6 +136,37 @@ class ParcoursInfirmerie(TestCase):
         self.assertEqual(m.anormalite, "inconnu")
         self.assertFalse(m.est_anormal)
 
+    def test_10b_valeur_sans_norme_nest_jamais_normale(self):
+        """Une valeur numérique sans aucune borne de référence ne peut pas
+        être classée.
+
+        C'est le cas le plus fréquent tant que les fourchettes ne sont pas
+        alignées sur le laboratoire de l'établissement : sans cette règle,
+        un résultat dont on ignore la norme s'afficherait comme normal,
+        donc rassurant. C'est un risque, pas une commodité.
+        """
+        m = Mesure.objects.create(
+            bilan=self.bilan, parametre="Glycémie", valeur="5,2", unite="g/L"
+        )
+        self.assertEqual(m.anormalite, "inconnu")
+        self.assertFalse(m.est_anormal)
+
+        # Avec une seule borne, seule la comparaison possible est faite :
+        # 140 avec un minimum à 60 n'est pas « bas », mais on ne peut pas
+        # dire non plus qu'il est « haut » sans borne maximale. Le
+        # résultat reste indéterminé, donc « inconnu ».
+        m2 = Mesure.objects.create(
+            bilan=self.bilan, parametre="Créatinine", valeur="140",
+            norme_min=60, norme_max=None,
+        )
+        self.assertEqual(m2.anormalite, "inconnu")
+
+        m3 = Mesure.objects.create(
+            bilan=self.bilan, parametre="Protéine C", valeur="50",
+            norme_min=60, norme_max=110,
+        )
+        self.assertEqual(m3.anormalite, "bas")
+
     def test_11_imc_calcule(self):
         self.assertAlmostEqual(self.consultation.imc, 24.7, places=1)
 
@@ -177,7 +208,7 @@ class ParcoursInfirmerie(TestCase):
             "mesure-TOTAL_FORMS": "3", "mesure-INITIAL_FORMS": "0",
             "mesure-MIN_NUM_FORMS": "0", "mesure-MAX_NUM_FORMS": "1000",
             "mesure-0-parametre": "LDL", "mesure-0-valeur": "1,62",
-            "mesure-0-unite": "g/L", "mesure-0-norme_min": "",
+            "mesure-0-unite": "g/L", "mesure-0-norme_min": "0",
             "mesure-0-norme_max": "1.3", "mesure-0-reference": "",
             "mesure-1-parametre": "", "mesure-1-valeur": "", "mesure-1-unite": "",
             "mesure-1-norme_min": "", "mesure-1-norme_max": "", "mesure-1-reference": "",

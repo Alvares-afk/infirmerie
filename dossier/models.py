@@ -222,17 +222,30 @@ class Mesure(models.Model):
 
     @property
     def anormalite(self):
-        """normal | bas | haut — interprete la valeur contre les normes.
+        """normal | bas | haut | inconnu — compare la valeur aux normes.
 
-        Une valeur non numérique (ex. "négatif") n'est pas classée ici :
-        elle doit être jugée à la lecture, par le soignant.
+        Règle d'or : ne jamais conclure sans norme complète. On ne peut
+        affirmer « normal » que si la valeur est bornée des deux côtés : un
+        minimum sans maximum ne dit rien sur un résultat élevé.
+
+        Trois cas distincts, tous en « inconnu » :
+          - la valeur n'est pas numérique (« négatif », « traces »)
+          - aucune borne n'est renseignée
+          - une seule des deux bornes l'est
+
+        Sans cette distinction, un résultat dont on ignore la norme
+        s'afficherait comme normal — donc rassurant. Or les fourchettes ne
+        sont pas encore alignées sur le laboratoire de l'établissement :
+        c'est le cas le plus fréquent aujourd'hui.
         """
         v = self.valeur_numerique
         if v is None:
             return "inconnu"
-        if self.norme_min is not None and v < self.norme_min:
+        if self.norme_min is None or self.norme_max is None:
+            return "inconnu"
+        if v < self.norme_min:
             return "bas"
-        if self.norme_max is not None and v > self.norme_max:
+        if v > self.norme_max:
             return "haut"
         return "normal"
 
