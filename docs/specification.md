@@ -113,15 +113,31 @@ référence.
 
 - dans les normes → affichée neutre
 - au-dessus / en dessous → signalée, avec la valeur mise en évidence
-- **valeur non chiffrée** (mention « négatif », « traces ») → marquée
-  *à qualifier*, jamais classée à tort comme normale
+- **norme absente ou incomplète** → marquée *à qualifier*, jamais classée
+  normale
 
-Ce dernier point est une décision de conception : une mention qualitative
-n'est pas une valeur. La classer « normale » par défaut serait un risque —
-une négativité se lirait comme un résultat rassurant.
+Ce dernier point est une décision de conception, et la règle la plus
+importante du fichier. Une valeur numérique dont on ignore la norme
+s'afficherait comme normale — donc rassurante. Or une seule borne ne permet
+pas de conclure : un minimum sans maximum ne dit rien sur un résultat élevé.
+Les trois cas renvoient « inconnu » : valeur non numérique, aucune borne,
+une seule des deux bornes.
 
-Les fourchettes dépendent du dosage, du sexe et parfois de l'âge : elles
-sont donc portées par la mesure, pas par un réglage global.
+### 4.3 bis Fourchettes de référence
+
+Les bornes **ne sont pas universelles** : elles dépendent de la méthode
+d'analyse et de l'appareil. Elles sont donc rattachées à un laboratoire
+nommé (`Laboratoire`), versionnées par dates, et **signées** — qui les a
+validées, et quand. Une fourchette saisie par erreur doit être discernable
+d'une fourchette validée par un biologiste.
+
+Chargement : `python manage.py charger_references --laboratoire "<nom>"`.
+Rechargement après un changement de normes : `--remplacer`.
+
+**Ce qui n'est pas dans la table n'est pas classé.** C'est le principe :
+plutôt qu'un « normal » inventé, un « à qualifier » honnête. Les paramètres
+absents de la feuille du laboratoire restent donc indéterminés — c'est
+voulu, et visible à l'écran.
 
 ### 4.4 Alertes
 
