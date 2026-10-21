@@ -14,7 +14,7 @@ apercu_*.html
 
 # --- Secrets --------------------------------------------------------------
 # Motif large ET variantes avec extension ajoutee (.env.txt, .env.local...) :
-# un fichier de secreticulo peut porter une extension et rester versionnable.
+# un fichier de secret peut porter une extension et rester versionnable.
 .env
 .env.*
 *.env
@@ -23,6 +23,7 @@ apercu_*.html
 !exemple.env.txt
 *env*.txt
 secret.env
+.secret-dev-key
 secret.env.*
 secrets/
 

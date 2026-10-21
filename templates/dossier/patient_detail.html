@@ -11,7 +11,7 @@
 
 <h1>{{ patient }}</h1>
 <p class="sous-titre">
-  Dossier {{ patient.numero_dossier }} · né{{ patient }} le {{ patient.date_naissance|date:"d/m/Y" }}
+  Dossier {{ patient.numero_dossier }} · {% if patient.sexe == "F" %}née{% else %}né{% endif %} le {{ patient.date_naissance|date:"d/m/Y" }}
   ({{ patient.age }} ans) · médecin traitant : {{ patient.medecin_traitant|default:"non renseigné" }}
   {% if patient.telephone %} · {{ patient.telephone }}{% endif %}
 </p>

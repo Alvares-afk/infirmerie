@@ -43,9 +43,18 @@ def _bool_environ(nom, defaut=False):
 _secret = os.environ.get("INFIRMERIE_SECRET_KEY", "").strip()
 if not _secret:
     if _bool_environ("INFIRMERIE_DEBUG", True):
-        # Développement : une clé éphémère suffit. Les sessions sont
-        # réinitialisées à chaque redémarrage, ce qui est sans conséquence ici.
-        _secret = "django-insecure-dev-" + secrets.token_urlsafe(32)
+        # Développement : clé conservée dans un fichier local ignoré par Git.
+        # Éphémère, elle aurait cassé toutes les sessions à chaque redémarrage :
+        # le soignant se retrouvait déconnecté sans comprendre pourquoi.
+        _fichier_cle = BASE_DIR / ".secret-dev-key"
+        try:
+            if not _fichier_cle.exists():
+                _fichier_cle.write_text(secrets.token_urlsafe(64), encoding="utf-8")
+            _secret = "django-insecure-dev-" + _fichier_cle.read_text(
+                encoding="utf-8"
+            ).strip()
+        except OSError:
+            _secret = "django-insecure-dev-" + secrets.token_urlsafe(32)
     else:
         raise RuntimeError(
             "INFIRMERIE_SECRET_KEY est obligatoire quand le mode debug est desactive.\n"

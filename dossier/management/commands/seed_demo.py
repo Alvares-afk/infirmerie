@@ -24,7 +24,7 @@ BILANS_TYPE = {
         ("Hémoglobine", "13,8", "g/dL", 12.0, 16.0),
         ("Globules blancs", "11,2", "G/L", 4.0, 10.0),   # haut
         ("Plaquettes", "245", "G/L", 150, 400),
-        ("Glycémie à jeun", "5,4", "g/L", 3.9, 6.1),
+        ("Glycémie à jeun", "5,4", "mmol/L", 3.9, 6.1),
         ("Créatinine", "78", "µmol/L", 60, 110),
         ("ALAT", "22", "UI/L", 10, 50),
         ("Ferritine", "18", "µg/L", 30, 300),             # bas
@@ -41,7 +41,7 @@ BILANS_TYPE = {
         ("T4 libre", "13,1", "pmol/L", 10, 20),
     ],
     "Glycémie veineuse": [
-        ("Glycémie", "6,8", "g/L", 3.9, 6.1),
+        ("Glycémie", "6,8", "mmol/L", 3.9, 6.1),
     ],
 }
 

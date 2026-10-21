@@ -36,8 +36,7 @@
     <td>
       {% if role == 'soignant' or role == 'admin' %}
         <a href="{% url 'patient_detail' p.pk %}">Dossier</a>
-      {% else
-        %}<span class="etiquette etiq-info">accès soignant</span>{% endif %}
+      {% else %}<span class="etiquette etiq-info">accès soignant</span>{% endif %}
     </td>
   </tr>
   {% endfor %}
