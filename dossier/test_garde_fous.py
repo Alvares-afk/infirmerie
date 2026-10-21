@@ -185,6 +185,25 @@ class AucuneBaliseAffichee(TestCase):
         for motif in BALISES_INTERDITES:
             self.assertNotIn(motif, html)
 
+    def test_point_quotidien_est_en_francais(self):
+        """La date doit suivre la langue de l'application, pas celle de Windows.
+
+        ``strftime`` utilise la locale du système : sur un poste configuré en
+        anglais, il affichait « Wednesday 21 october 2026 » dans une interface
+        entièrement française.
+        """
+        client = Client()
+        client.force_login(self.soignant)
+        html = client.get(reverse("briefing")).content.decode("utf-8")
+
+        anglais = (
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+            "Sunday", "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December",
+        )
+        trouves = [mot for mot in anglais if mot in html]
+        self.assertEqual(trouves, [], f"mots anglais dans l'interface : {trouves}")
+
 
 class UnitesCoherentes(TestCase):
     """Une unité fausse rend un résultat dangereux rassurant."""

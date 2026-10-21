@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods
 
 from .forms import (
@@ -107,7 +108,7 @@ def briefing(request):
         {
             **data,
             "mode_demo": settings.MODE_DEMO_HEBERGE,
-            "date_lisible": data["date"].strftime("%A %d %B %Y").capitalize(),
+            "date_lisible": date_format(data["date"], "l j F Y"),
         },
     )
 
