@@ -59,6 +59,13 @@ class ElementBriefing:
         return f"<Element {self.categorie} P{self.priorite} {self.titre}>"
 
 
+def _nombre(valeur):
+    """Nombre lisible en français : 30 plutôt que 30.0, 3,9 plutôt que 3.9."""
+    if valeur is None:
+        return "—"
+    return f"{valeur:g}".replace(".", ",")
+
+
 def _valeurs_hors_norme(patient):
     """Mesures hors norme du dernier bilan. Pas d'interprétation."""
     bilan = patient.dernier_bilan()
@@ -101,15 +108,18 @@ def construire_briefing(patient: Patient, *, aujourdhui=None) -> list:
             titre=f"{m.parametre} {m.valeur} {m.unite}".strip(),
             patient=patient,
             detail=f"{m.libelle_anomalie} — référence "
-                   f"{m.norme_min} – {m.norme_max} {m.unite}".strip(),
+                   f"{_nombre(m.norme_min)} – {_nombre(m.norme_max)} {m.unite}".strip(),
             source=f"/bilans/{bilan.pk}/",
         ))
 
-    # 3. Suivis échus — une échéance est déjà dépassée
+    # 3. Suivis — une échéance dépassée passe avant une échéance à venir.
+    # La condition était inversée : un suivi échu sortait en « à planifier »
+    # et un suivi du mois prochain en « avant la visite ». Sur un outil dont
+    # la promesse est le zéro oubli, c'est le pire sens possible.
     for s in patient.suivis.filter(fait=False).order_by("echeance"):
         echu = s.echeance and s.echeance < aujourdhui
         lignes.append(ElementBriefing(
-            priorite=PRIORITE_NORMALE if echu else PRIORITE_HAUTE,
+            priorite=PRIORITE_HAUTE if echu else PRIORITE_NORMALE,
             categorie="suivi",
             titre=s.description,
             patient=patient,

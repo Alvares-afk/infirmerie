@@ -463,3 +463,30 @@ class Relance(models.Model):
     @property
     def age_jours(self):
         return (timezone.now() - self.redigee_le).days
+
+
+class Signalement(models.Model):
+    """Trace des éléments déjà portés à la connaissance du soignant.
+
+    Sert uniquement à distinguer « nouveau depuis hier » de « déjà signalé »
+    dans le message du matin. Ce modèle ne décide de rien : un élément reste
+    listé chaque jour, seule la mention « nouveau » change. Ainsi une panne
+    d'envoi ne fait jamais disparaître une alerte.
+
+    Aucune donnée clinique n'y est stockée : une empreinte technique, un
+    libellé court pour l'humain, et des horodatages.
+    """
+
+    empreinte = models.CharField("empreinte", max_length=64, unique=True)
+    libelle = models.CharField("libellé", max_length=200)
+    premiere_vue = models.DateTimeField("première vue", auto_now_add=True)
+    derniere_vue = models.DateTimeField("dernière vue", auto_now=True)
+    nb_envois = models.PositiveIntegerField("nombre d'envois", default=0)
+
+    class Meta:
+        verbose_name = "signalement"
+        verbose_name_plural = "signalements"
+        ordering = ["-derniere_vue"]
+
+    def __str__(self):
+        return f"{self.libelle} ({self.nb_envois} envoi(s))"
