@@ -54,43 +54,178 @@ def normaliser(texte):
 
 
 # Fourchettes au-delà desquelles l'unité est forcément fausse.
-# Clé : fragment de libellé normalisé. Valeur : (borne basse, borne haute)
-# plausibles pour cette unité précise.
 #
-# C'est la table qui aurait attrapé le défaut : une glycémie « g/L » dont la
-# borne haute vaut 6,1 sort de (0,2 ; 3,0) — c'est une valeur en mmol/L.
+# Ce ne sont PAS les normes biologiques : ce sont les bornes physiologiques
+# larges, au-delà desquelles la valeur ne peut pas exister chez un vivant.
+# Un écart d'unité se trompe d'un facteur 10 à 100 ; une marge large suffit
+# donc à le détecter sans jamais rejeter un vrai résultat, même extrême.
+#
+# Clé    : fragment de libellé normalisé (sans accents, minuscules).
+# Valeur : {unité normalisée: (borne basse, borne haute)}.
+#
+# Les clés sont testées de la plus longue à la plus courte : « hemoglobine
+# glyquee » doit l'emporter sur « hemoglobine », sinon un HbA1c en % serait
+# jugé contre une hémoglobine en g/dL — et refusé à tort.
 FOURCHETTES_PLAUSIBLES = {
-    "glycemie": {
-        "g/l": (0.2, 3.0),
-        "mmol/l": (1.0, 40.0),
-    },
-    "triglycerides": {
-        "g/l": (0.1, 15.0),
-        "mmol/l": (0.1, 20.0),
-    },
-    "cholesterol": {
-        "g/l": (0.5, 8.0),
-        "mmol/l": (1.0, 25.0),
-    },
-    "creatinine": {
-        "umol/l": (10.0, 2000.0),
-        "mg/l": (1.0, 100.0),
-    },
-    "ferritine": {
-        "ug/l": (0.5, 5000.0),
-        "ng/ml": (0.5, 5000.0),
+    # --- Hématologie (les 13 paramètres chargés par le laboratoire) ---------
+    "hemoglobine glyquee": {
+        "%": (2.0, 20.0),
+        "mmol/mol": (10.0, 200.0),
     },
     "hemoglobine": {
         "g/dl": (2.0, 25.0),
         "g/l": (20.0, 250.0),
+        "g/100ml": (2.0, 25.0),
+    },
+    "hematocrite": {
+        "%": (5.0, 75.0),
+        "l/l": (0.05, 0.75),
+    },
+    "erythrocytes": {
+        "x10^6/mm3": (0.5, 10.0),
+        "x10^12/l": (0.5, 10.0),
+        "t/l": (0.5, 10.0),
+        "millions/mm3": (0.5, 10.0),
     },
     "leucocytes": {
-        "g/l": (0.01, 100.0),
+        "x10^3/mm3": (0.05, 200.0),
+        "x10^9/l": (0.05, 200.0),
+        "g/l": (0.05, 200.0),
+        "milliers/mm3": (0.05, 200.0),
     },
     "globules blancs": {
-        "g/l": (0.01, 100.0),
+        "x10^3/mm3": (0.05, 200.0),
+        "x10^9/l": (0.05, 200.0),
+        "g/l": (0.05, 200.0),
+    },
+    "plaquettes": {
+        "x10^3/mm3": (1.0, 2000.0),
+        "x10^9/l": (1.0, 2000.0),
+        "g/l": (1.0, 2000.0),
+        "milliers/mm3": (1.0, 2000.0),
+    },
+    "vgm": {
+        "fl": (40.0, 150.0),
+        "um3": (40.0, 150.0),
+    },
+    "vcm": {
+        "fl": (40.0, 150.0),
+    },
+    "tcmh": {
+        "pg": (10.0, 50.0),
+    },
+    "ccmh": {
+        "g/dl": (20.0, 45.0),
+        "g/l": (200.0, 450.0),
+        "%": (20.0, 45.0),
+    },
+    # Formule leucocytaire : toujours en pourcentage.
+    "neutrophiles": {"%": (0.0, 100.0)},
+    "lymphocytes": {"%": (0.0, 100.0)},
+    "monocytes": {"%": (0.0, 100.0)},
+    "eosinophiles": {"%": (0.0, 100.0)},
+    "basophiles": {"%": (0.0, 100.0)},
+    # --- Biochimie ---------------------------------------------------------
+    "glycemie": {
+        "g/l": (0.2, 3.0),
+        "mmol/l": (1.0, 40.0),
+        "mg/dl": (20.0, 700.0),
+    },
+    "creatinine": {
+        "umol/l": (10.0, 2000.0),
+        "mg/l": (1.0, 100.0),
+        "mg/dl": (0.1, 20.0),
+    },
+    "uree": {
+        "g/l": (0.05, 5.0),
+        "mmol/l": (1.0, 100.0),
+        "mg/dl": (3.0, 300.0),
+        "mg/l": (30.0, 3000.0),
+    },
+    "acide urique": {
+        "mg/l": (5.0, 200.0),
+        "mg/dl": (0.5, 20.0),
+        "umol/l": (15.0, 1200.0),
+    },
+    "uricemie": {
+        "mg/l": (5.0, 200.0),
+        "umol/l": (15.0, 1200.0),
+    },
+    # La borne basse descend à 0,05 g/L pour couvrir le HDL, dont le
+    # fragment « cholesterol » capte aussi le libellé.
+    "cholesterol": {
+        "g/l": (0.05, 10.0),
+        "mmol/l": (0.1, 30.0),
+        "mg/dl": (10.0, 800.0),
+    },
+    "ldl": {
+        "g/l": (0.1, 6.0),
+        "mmol/l": (0.2, 20.0),
+        "mg/dl": (10.0, 400.0),
+    },
+    "hdl": {
+        "g/l": (0.05, 3.0),
+        "mmol/l": (0.1, 8.0),
+        "mg/dl": (2.0, 150.0),
+    },
+    "triglycerides": {
+        "g/l": (0.1, 15.0),
+        "mmol/l": (0.1, 20.0),
+        "mg/dl": (5.0, 1500.0),
+    },
+    "bilirubine": {
+        "mg/l": (0.5, 300.0),
+        "umol/l": (1.0, 500.0),
+        "mg/dl": (0.05, 30.0),
+    },
+    "asat": {"ui/l": (0.0, 5000.0), "u/l": (0.0, 5000.0)},
+    "alat": {"ui/l": (0.0, 5000.0), "u/l": (0.0, 5000.0)},
+    "ggt": {"ui/l": (0.0, 5000.0), "u/l": (0.0, 5000.0)},
+    "phosphatases": {"ui/l": (0.0, 3000.0), "u/l": (0.0, 3000.0)},
+    "ferritine": {
+        "ug/l": (0.5, 5000.0),
+        "ng/ml": (0.5, 5000.0),
+    },
+    "crp": {
+        "mg/l": (0.0, 500.0),
+        "mg/dl": (0.0, 50.0),
+    },
+    "tsh": {
+        "mui/l": (0.0, 200.0),
+        "uui/ml": (0.0, 200.0),
+        "ui/l": (0.0, 200.0),
+    },
+    "t4 libre": {
+        "pmol/l": (1.0, 100.0),
+        "ng/l": (1.0, 60.0),
+    },
+    "albumine": {
+        "g/l": (5.0, 70.0),
+        "g/dl": (0.5, 7.0),
+    },
+    "protides": {
+        "g/l": (10.0, 130.0),
+        "g/dl": (1.0, 13.0),
+    },
+    "proteines": {
+        "g/l": (10.0, 130.0),
+        "g/dl": (1.0, 13.0),
+    },
+    "natremie": {"mmol/l": (90.0, 200.0), "meq/l": (90.0, 200.0)},
+    "sodium": {"mmol/l": (90.0, 200.0), "meq/l": (90.0, 200.0)},
+    "kaliemie": {"mmol/l": (1.0, 10.0), "meq/l": (1.0, 10.0)},
+    "potassium": {"mmol/l": (1.0, 10.0), "meq/l": (1.0, 10.0)},
+    "calcium": {
+        "mmol/l": (0.5, 5.0),
+        "mg/l": (10.0, 200.0),
+        "mg/dl": (1.0, 20.0),
     },
 }
+
+
+def _entrees_triees():
+    """Clés de la plus longue à la plus courte : le libellé le plus précis gagne."""
+    return sorted(FOURCHETTES_PLAUSIBLES.items(), key=lambda kv: len(kv[0]), reverse=True)
 
 
 def incoherence_unite(parametre, unite, norme_min, norme_max):
@@ -103,7 +238,7 @@ def incoherence_unite(parametre, unite, norme_min, norme_max):
     libelle = normaliser(parametre)
     unite_basse = normaliser(unite).replace(" ", "")
 
-    for fragment, unites in FOURCHETTES_PLAUSIBLES.items():
+    for fragment, unites in _entrees_triees():
         if fragment not in libelle:
             continue
         if unite_basse not in unites:
@@ -294,6 +429,45 @@ class UnitesCoherentes(TestCase):
                         f"{norme_max}) — l'interprétation serait inversée.",
                     )
 
+    def test_fourchettes_du_laboratoire_coherentes(self):
+        """Les 13 fourchettes réellement chargées doivent passer le contrôle."""
+        from dossier.management.commands.charger_references import REFS
+
+        self.assertEqual(len(REFS), 13, "la feuille du laboratoire compte 13 paramètres")
+        for code, libelle, unite, norme_min, norme_max, *_ in REFS:
+            with self.subTest(code=code):
+                message = incoherence_unite(libelle, unite, norme_min, norme_max)
+                self.assertIsNone(message, message)
+
+    def test_hemoglobine_glyquee_n_est_pas_une_hemoglobine(self):
+        """Le libellé le plus précis doit l'emporter sur le plus général."""
+        self.assertIsNone(
+            incoherence_unite("Hémoglobine glyquée", "%", 4.0, 6.0),
+            "un HbA1c en % est correct et ne doit pas être refusé",
+        )
+        self.assertIsNotNone(
+            incoherence_unite("Hémoglobine glyquée", "g/dL", 4.0, 16.0),
+            "un HbA1c en g/dL n'existe pas : c'est l'unité de l'hémoglobine",
+        )
+
+    def test_cles_et_unites_declarees_en_forme_normalisee(self):
+        """Une clé écrite avec un accent ou un µ serait morte sans le dire."""
+        for cle, unites in FOURCHETTES_PLAUSIBLES.items():
+            with self.subTest(cle=cle):
+                self.assertEqual(
+                    cle,
+                    normaliser(cle),
+                    f"la clé « {cle} » ne sera jamais atteinte : "
+                    f"écrire « {normaliser(cle)} »",
+                )
+                for unite in unites:
+                    self.assertEqual(
+                        unite,
+                        normaliser(unite),
+                        f"l'unité « {unite} » ne sera jamais atteinte : "
+                        f"écrire « {normaliser(unite)} »",
+                    )
+
     def test_le_controle_detecte_vraiment_l_erreur(self):
         """Un garde-fou qui ne détecte rien ne protège de rien."""
         message = incoherence_unite("Glycémie à jeun", "g/L", 3.9, 6.1)
@@ -316,9 +490,13 @@ class UnitesCoherentes(TestCase):
         )
 
     def test_unite_inconnue_signalee(self):
-        message = incoherence_unite("Glycémie", "mg/dL", 70, 110)
+        message = incoherence_unite("Glycémie", "UI/L", 70, 110)
         self.assertIsNotNone(
             message, "une unité absente de la table doit être signalée"
+        )
+        self.assertIsNone(
+            incoherence_unite("Glycémie", "mg/dL", 70, 110),
+            "mg/dL est une unité valide pour une glycémie et doit passer",
         )
 
 
