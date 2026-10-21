@@ -63,7 +63,14 @@ def styles():
 
 def tableau(entetes, lignes, largeurs, s, couleurs_etat=None):
     """Tableau à en-tête vert. `couleurs_etat` : colonne 0 -> couleur du texte."""
-    donnees = [[Paragraph(f"<b>{h}</b>", s["petit"]) for h in entetes]]
+    # Le texte de l'en-tête a sa propre couleur : sans cela, le style du
+    # paragraphe (gris) l'emporte sur le TEXTCOLOR blanc du tableau, et
+    # l'en-tête devient gris sur vert — illisible.
+    style_entete = ParagraphStyle(
+        "entete", parent=s["petit"], textColor=colors.white,
+        fontName="Helvetica-Bold", fontSize=8.5,
+    )
+    donnees = [[Paragraph(str(h), style_entete) for h in entetes]]
     for lg in lignes:
         donnees.append([Paragraph(str(c), s["corps"]) for c in lg])
 

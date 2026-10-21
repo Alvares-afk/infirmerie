@@ -15,7 +15,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.platypus import (
     KeepTogether,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -99,7 +98,7 @@ def construire():
         s["petit"],
     ))
 
-    F.append(PageBreak())
+    F.append(Spacer(1, 14))
 
     # ------------------------------------------------------------- page 2
     F.append(Paragraph("2. Forces", s["h2"]))
@@ -147,7 +146,7 @@ def construire():
             Paragraph(texte, s["corps"]),
         ]))
 
-    F.append(PageBreak())
+    F.append(Spacer(1, 14))
 
     # ------------------------------------------------------------- page 3
     F.append(Paragraph("3. Faiblesses", s["h2"]))
@@ -198,7 +197,7 @@ def construire():
         [8 * mm, 62 * mm, 100 * mm], s,
     ))
 
-    F.append(PageBreak())
+    F.append(Spacer(1, 14))
 
     # ------------------------------------------------------------- page 4
     F.append(Paragraph("4. Verdict", s["h2"]))
