@@ -233,6 +233,7 @@ CSRF_TRUSTED_ORIGINS = [
 # a rien — mais il rend l'instance visiblement demo : bandeau permanent,
 # mention sur les documents imprimes. Un patient reel saisi par megarde y
 # resterait, mais serait signale partout.
-MODE_DEMO_HEBERGE = bool(os.environ.get("DATABASE_URL")) and not _bool_environ(
-    "INFIRMERIE_AUTORISER_DONNEES_REELLES", False
-)
+MODE_DEMO_HEBERGE = (
+    bool(os.environ.get("DATABASE_URL"))
+    or _bool_environ("INFIRMERIE_MODE_DEMO", False)
+) and not _bool_environ("INFIRMERIE_AUTORISER_DONNEES_REELLES", False)
