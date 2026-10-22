@@ -35,6 +35,12 @@ class Command(BaseCommand):
             default=20,
             help="Longueur des mots de passe générés (20 par défaut).",
         )
+        parser.add_argument(
+            "--mot-de-passe",
+            help="Impose un même mot de passe à tous les comptes traités. "
+                 "À réserver à un poste isolé : un mot de passe partagé "
+                 "supprime la séparation des rôles dans les faits.",
+        )
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -52,10 +58,11 @@ class Command(BaseCommand):
             raise CommandError("Aucun compte à traiter.")
 
         generee = []
+        impose = options.get("mot_de_passe")
         for utilisateur in utilisateurs:
             # token_urlsafe : aléatoire cryptographique, sans caractère ambigu
             # à recopier depuis un écran.
-            mot_de_passe = secrets.token_urlsafe(options["longueur"])
+            mot_de_passe = impose or secrets.token_urlsafe(options["longueur"])
             utilisateur.set_password(mot_de_passe)
             utilisateur.save(update_fields=["password"])
             roles = ", ".join(g.name for g in utilisateur.groups.all())
@@ -63,14 +70,31 @@ class Command(BaseCommand):
                 roles = "superutilisateur" + (f", {roles}" if roles else "")
             generee.append((utilisateur.username, mot_de_passe, roles or "sans rôle"))
 
-        fichier = comptes.ecrire(generee)
-
         self.stdout.write("")
         self.stdout.write(
             self.style.SUCCESS(f"{len(generee)} mot(s) de passe renouvelé(s).")
         )
         for utilisateur in utilisateurs:
             self.stdout.write(f"  {utilisateur.username}")
+
+        if impose:
+            # Mot de passe imposé : il est connu de celui qui l'a demandé.
+            # L'écrire dans un fichier n'ajouterait qu'une copie en clair.
+            if comptes.FICHIER.exists():
+                comptes.FICHIER.unlink()
+                self.stdout.write("")
+                self.stdout.write(
+                    f"Ancien fichier {comptes.FICHIER.name} supprimé : "
+                    f"il contenait des mots de passe qui ne servent plus."
+                )
+            self.stdout.write("")
+            self.stdout.write(
+                "Mot de passe imposé, commun aux comptes traités. "
+                "Il n'a été écrit nulle part."
+            )
+            return
+
+        fichier = comptes.ecrire(generee)
         self.stdout.write("")
         self.stdout.write(f"Écrits dans : {fichier}")
         self.stdout.write(

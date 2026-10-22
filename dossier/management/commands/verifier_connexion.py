@@ -24,9 +24,18 @@ COMPTES = [
 class Command(BaseCommand):
     help = "Tente une connexion par formulaire pour chaque compte de démonstration."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--mot-de-passe",
+            help="Mot de passe à essayer pour tous les comptes (vérification "
+                 "après un changement volontaire). Sans cette option, le "
+                 "fichier acces-comptes.txt est utilisé.",
+        )
+
     def handle(self, *args, **options):
         User = get_user_model()
         mots = comptes.lire()
+        impose = options.get("mot_de_passe")
         echecs = 0
 
         entete = f"{'compte':<14} {'mdp':<6} {'session':<10} {'arrivee':<22} rôle attendu"
@@ -44,7 +53,7 @@ class Command(BaseCommand):
             # Après renouvellement, les mots de passe vivent dans
             # acces-comptes.txt. Le mot de passe de démonstration ne sert plus
             # que de repli tant que le fichier n'existe pas.
-            mot_de_passe = mots.get(username, MOT_DE_PASSE_DEMO)
+            mot_de_passe = impose or mots.get(username, MOT_DE_PASSE_DEMO)
 
             c = Client()
             r = c.post(
@@ -79,7 +88,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"{echecs} compte(s) en échec."))
         else:
             self.stdout.write(self.style.SUCCESS("Tous les comptes se connectent."))
-            if comptes.FICHIER.exists():
+            if impose:
+                self.stdout.write("Mot de passe imposé : vérifié sur les trois comptes.")
+            elif comptes.FICHIER.exists():
                 self.stdout.write(
                     f"Mots de passe individuels : {comptes.FICHIER.name} "
                     f"(à supprimer une fois notés)"
