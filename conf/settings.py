@@ -76,7 +76,9 @@ _hosts = os.environ.get("INFIRMERIE_ALLOWED_HOSTS", "").strip()
 ALLOWED_HOSTS = (
     [h.strip() for h in _hosts.split(",") if h.strip()]
     if _hosts
-    else ["127.0.0.1", "localhost", "testserver"]
+    # « infirmerie » : le nom d'hôte local posé dans le fichier hosts du poste
+    # (127.0.0.1 infirmerie). Sans lui, l'adresse conviviale renvoie 400.
+    else ["127.0.0.1", "localhost", "infirmerie", "testserver"]
 )
 
 INSTALLED_APPS = [
