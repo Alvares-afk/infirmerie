@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.test import Client
 
+from dossier import comptes
 from dossier.management.commands.seed_demo import MOT_DE_PASSE_DEMO
 
 COMPTES = [
@@ -25,6 +26,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         User = get_user_model()
+        mots = comptes.lire()
         echecs = 0
 
         entete = f"{'compte':<14} {'mdp':<6} {'session':<10} {'arrivee':<22} rôle attendu"
@@ -39,10 +41,15 @@ class Command(BaseCommand):
                 echecs += 1
                 continue
 
+            # Après renouvellement, les mots de passe vivent dans
+            # acces-comptes.txt. Le mot de passe de démonstration ne sert plus
+            # que de repli tant que le fichier n'existe pas.
+            mot_de_passe = mots.get(username, MOT_DE_PASSE_DEMO)
+
             c = Client()
             r = c.post(
                 "/connexion/",
-                {"username": username, "password": MOT_DE_PASSE_DEMO},
+                {"username": username, "password": mot_de_passe},
                 follow=True,
             )
 
@@ -72,4 +79,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f"{echecs} compte(s) en échec."))
         else:
             self.stdout.write(self.style.SUCCESS("Tous les comptes se connectent."))
-            self.stdout.write(f"Mot de passe commun : {MOT_DE_PASSE_DEMO}")
+            if comptes.FICHIER.exists():
+                self.stdout.write(
+                    f"Mots de passe individuels : {comptes.FICHIER.name} "
+                    f"(à supprimer une fois notés)"
+                )
+            else:
+                self.stdout.write(
+                    "Attention : mot de passe de démonstration encore en service. "
+                    "Lancez renouveler_mots_de_passe."
+                )

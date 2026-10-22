@@ -38,25 +38,37 @@ def _prefixe(cle):
     return "reel_" if cle == "reel" else "demo_"
 
 
-def sauvegarder(cle="demo"):
-    db = BASES[cle]
+def _chemin_base(cle, base=None):
+    base = Path(base) if base else BASE
+    return base / ("db_reelle.sqlite3" if cle == "reel" else "db.sqlite3")
+
+
+def sauvegarder(cle="demo", *, base=None, dossier=None):
+    """Copie la base et fait tourner l'historique.
+
+    `base` et `dossier` permettent de travailler sur un bac à sable : c'est
+    ainsi que la restauration est vérifiée sans jamais toucher aux vraies
+    données (voir `manage.py verifier_restauration`).
+    """
+    dossier = Path(dossier) if dossier else DOSSIER
+    db = _chemin_base(cle, base)
     if not db.exists():
         nom = "dossiers reels" if cle == "reel" else "demonstration"
         print(f"Base {nom} introuvable ({db.name}).")
         print("Lancez d'abord demarrer_reel.bat ou demarrer_demo.bat.")
         return None
 
-    DOSSIER.mkdir(exist_ok=True)
+    dossier.mkdir(parents=True, exist_ok=True)
     prefixe = _prefixe(cle)
-    horodatage = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    cible = DOSSIER / f"{prefixe}{horodatage}.db"
+    horodatage = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+    cible = dossier / f"{prefixe}{horodatage}.db"
 
     shutil.copy2(db, cible)
     print(f"Sauvegarde creee : {cible.name} ({cible.stat().st_size / 1024:.0f} Ko)")
 
     # Rotation : uniquement les sauvegardes de CETTE base
     anciennes = sorted(
-        (p for p in DOSSIER.glob(f"{prefixe}*.db") if p != cible),
+        (p for p in dossier.glob(f"{prefixe}*.db") if p != cible),
         key=lambda p: p.name,
     )
     for ancienne in anciennes[: max(0, len(anciennes) - (GARDER - 1))]:
@@ -66,7 +78,8 @@ def sauvegarder(cle="demo"):
     return cible
 
 
-def restaurer(chemin, cle="demo"):
+def restaurer(chemin, cle="demo", *, base=None, dossier=None):
+    dossier = Path(dossier) if dossier else DOSSIER
     source = Path(chemin)
     if not source.is_absolute():
         source = BASE / source
@@ -91,14 +104,15 @@ def restaurer(chemin, cle="demo"):
         print("Une restauration ne franchit jamais les deux bases.")
         return False
 
-    db = BASES[cle]
+    db = _chemin_base(cle, base)
 
     if db.exists():
         # Archive de securite : la base courante n'est jamais perdue
-        archive = DOSSIER / (
-            f"{_prefixe(cle)}avant_restauration_{datetime.now():%Y-%m-%d_%H%M%S}.db"
+        archive = dossier / (
+            f"{_prefixe(cle)}avant_restauration_"
+            f"{datetime.now():%Y-%m-%d_%H%M%S_%f}.db"
         )
-        DOSSIER.mkdir(exist_ok=True)
+        dossier.mkdir(parents=True, exist_ok=True)
         shutil.copy2(db, archive)
         print(f"Base courante archivee dans {archive.name}")
 

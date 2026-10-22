@@ -65,3 +65,6 @@ Thumbs.db
 desktop.ini
 
 .vercel
+
+# Mots de passe remis une fois, à supprimer après avoir été notés.
+acces-comptes.txt
