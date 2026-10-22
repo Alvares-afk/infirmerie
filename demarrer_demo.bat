@@ -27,9 +27,12 @@ set INFIRMERIE_BASE=
 echo.
 echo   Application : http://127.0.0.1:8000
 echo.
-echo     soignant       : dr.benali      / Infirmerie2026!
-echo     secretariat    : secretariat    / Infirmerie2026!
-echo     administration : admin         / Infirmerie2026!
+echo     soignant       : dr.benali
+echo     secretariat    : secretariat
+echo     administration : admin
+echo.
+echo   Mot de passe : celui defini a l'installation.
+echo   Pour en definir un : manage.py renouveler_mots_de_passe
 echo.
 echo   Laissez cette fenetre ouverte. Ctrl+C pour arreter.
 echo.

@@ -5,28 +5,43 @@ Application locale (Django + SQLite), prévue pour un poste Windows.
 
 ## Démarrer
 
-**Deux bases de données, deux lanceurs.** Elles ne partagent rien : une
-erreur sur la démonstration ne peut pas atteindre vos vrais dossiers.
+Double-cliquez sur **`lancer.py`**. Il choisit un port libre, ouvre le
+navigateur, et l'application répond sur <http://infirmerie/> (le nom vient du
+fichier hosts du poste, posé une fois par `installer_nom.bat`).
 
-| Lanceur | Base | Contenu |
+**Deux bases de données.** Elles ne partagent rien : une erreur sur la
+démonstration ne peut pas atteindre vos vrais dossiers.
+
+| Base | Contenu | Comment l'ouvrir |
 |---|---|---|
-| **`demarrer_reel.bat`** | `db_reelle.sqlite3` | **Vos vrais dossiers patients** |
-| `demarrer_demo.bat` | `db.sqlite3` | Patients fictifs, pour essayer |
+| `db_reelle.sqlite3` | **Vos vrais dossiers patients** | `demarrer_reel.bat` |
+| `db.sqlite3` | Patients fictifs, pour essayer | `demarrer_demo.bat` |
 
-Puis <http://127.0.0.1:8000>
+Ces deux lanceurs fixent le port 8000 et n'ouvrent pas le navigateur : préférez
+`lancer.py` au quotidien. `lancer.py` utilise la base de démonstration ; pour
+les vrais dossiers, passez par `demarrer_reel.bat`.
 
 Un bandeau rouge en haut de chaque page indique en permanence quelle base est
 ouverte. En cas de doute, la réponse est visible à l'écran.
 
 ### Comptes
 
-| Rôle | Identifiant | Mot de passe |
-|---|---|---|
-| Soignant | `dr.benali` | `Infirmerie2026!` |
-| Secrétariat | `secretariat` | `Infirmerie2026!` |
-| Administrateur | `admin` | `Infirmerie2026!` |
+| Rôle | Identifiant |
+|---|---|
+| Soignant | `dr.benali` |
+| Secrétariat | `secretariat` |
+| Administrateur | `admin` |
 
-Mot de passe commun aux trois : `Infirmerie2026!`
+Le mot de passe n'est **pas** écrit dans le dépôt — un mot de passe versionné
+est un mot de passe public. Il se définit à l'installation :
+
+```bash
+manage.py renouveler_mots_de_passe          # un mot de passe distinct par compte
+manage.py renouveler_mots_de_passe --mot-de-passe "…"   # ou une phrase commune
+```
+
+Dans le premier cas, les mots de passe sont remis une fois dans
+`acces-comptes.txt` (ignoré par Git) : à noter, puis à supprimer.
 
 ## Rôles
 
@@ -103,9 +118,16 @@ dossier/
   views.py             vues et contrôle des permissions
   permissions.py       rôles secrétariat / soignant
   forms.py             formulaires de saisie
-  tests.py             21 tests de parcours et de permissions
+  tests.py             parcours et permissions
+  test_garde_fous.py   rendu des pages, unités, langue de l'interface
+  test_point_du_jour.py commande du message de 6 h
   management/commands/
     seed_demo.py       données de démonstration
+    point_du_jour.py   message du matin (texte prêt à envoyer)
+    renouveler_mots_de_passe.py  un mot de passe par compte
+    importer_fourchettes.py      chargement contrôlé d'une feuille de labo
+    verifier_unites.py           unités vs bornes, sur la base réelle
+    verifier_restauration.py     teste sauvegarde → restauration
     verifier_pages.py  rend chaque écran et affiche son code de réponse
 templates/dossier/     écrans
 sauvegarder.py         sauvegarde / restauration
@@ -132,9 +154,11 @@ Désactivation : `INFIRMERIE_JOURNAL=0`.
 ## Vérifications
 
 ```
-python manage.py test dossier      # 32 tests
+python manage.py test dossier      # 111 tests
 python manage.py verifier_pages    # rend les 12 écrans pour les 2 rôles
 python manage.py verifier_connexion
+python manage.py verifier_unites   # unités vs bornes, sur la base réelle
+python manage.py verifier_restauration   # sauvegarde → restauration, sans risque
 ```
 
 ## Mise en service réelle
@@ -163,13 +187,18 @@ Ce qui est fait et vérifié :
 - [x] Journal d'accès en place, en lecture seule dans l'administration
 - [x] Permissions contrôlées côté serveur, testées
 - [x] Aucune donnée clinique dans le journal ni dans les URL
-- [x] Accès distant uniquement par VPN, jamais de port ouvert
+- [x] Pas d'exposition publique : réseau local ou VPN, jamais d'IP publique
+- [x] Mots de passe définis hors du dépôt (`renouveler_mots_de_passe`)
+- [x] Restauration de sauvegarde réellement testée (`verifier_restauration`)
 
 À faire avec l'établissement :
 
-- [ ] Changer le mot de passe du compte `admin`
 - [ ] Choisir le VPN avec l'informaticien
 - [ ] Migrer vers PostgreSQL si le volume le justifie
-- [ ] Fourchettes de référence validées par un biologiste
+- [ ] Fourchettes de biochimie : les 13 paramètres d'hématologie sont chargés,
+  la biochimie attend la seconde feuille du laboratoire
+  (`importer_fourchettes`)
+- [ ] Définir les seuils de relance (365 jours pour un bilan, 730 pour une
+  absence) : ce sont aujourd'hui des choix de développement
 - [ ] Définir la durée de conservation et le sort des données au départ d'un patient
 - [ ] Procédure de purge du journal (la commande existe, la politique reste à fixer)
