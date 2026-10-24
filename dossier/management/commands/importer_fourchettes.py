@@ -217,9 +217,16 @@ class Command(BaseCommand):
         if nom:
             laboratoire, _ = Laboratoire.objects.get_or_create(nom=nom)
             return laboratoire
-        existant = Laboratoire.objects.order_by("-id").first()
+        # Un seul laboratoire fait foi sur ce poste : les fourchettes
+        # d'hématologie et de biochimie vivent ensemble, sans distinction
+        # de lieu. On reprend celui du code, sinon le plus récent.
+        existant = (
+            Laboratoire.objects.filter(nom="Laboratoire de référence").first()
+            or Laboratoire.objects.order_by("-id").first()
+        )
         if existant is None:
-            raise CommandError(
-                "Aucun laboratoire en base. Précisez --laboratoire \"Nom du labo\"."
-            )
+            # Premier import sur un poste neuf : on crée le laboratoire
+            # unique plutôt que d'exiger un nom que personne ne connaît.
+            existant = Laboratoire.objects.create(nom="Laboratoire de référence")
+            self.stdout.write(f"Laboratoire créé : {existant.nom}")
         return existant

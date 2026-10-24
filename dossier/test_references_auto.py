@@ -129,8 +129,7 @@ class ImportReel(TestCase):
         flux = StringIO()
         call_command(
             "importer_fourchettes",
-            "fourchettes-biochimie-ayame.csv",
-            "--laboratoire", "Hôpital Général d'Ayamé",
+            "fourchettes-biochimie.csv",
             stdout=flux,
         )
         self.assertEqual(
