@@ -151,7 +151,8 @@ FOURCHETTES_PLAUSIBLES = {
         "mmol/l": (0.1, 8.0),
         "mg/dl": (2.0, 150.0),
     },
-    "triglycerides": {
+    # Clé au singulier : elle attrape « triglycéride » et « triglycérides ».
+    "triglyceride": {
         "g/l": (0.1, 15.0),
         "mmol/l": (0.1, 20.0),
         "mg/dl": (5.0, 1500.0),
@@ -202,6 +203,17 @@ FOURCHETTES_PLAUSIBLES = {
         "mmol/l": (0.5, 5.0),
         "mg/l": (10.0, 200.0),
         "mg/dl": (1.0, 20.0),
+    },
+    "magnesium": {
+        "mg/l": (2.0, 80.0),
+        "mmol/l": (0.1, 3.5),
+        "meq/l": (0.2, 7.0),
+    },
+    # « Transaminase (TGO/TGP) » désigne les deux enzymes d'un seul libellé :
+    # même unité, donc une seule entrée suffit.
+    "transaminase": {
+        "ui/l": (0.0, 5000.0),
+        "u/l": (0.0, 5000.0),
     },
 }
 

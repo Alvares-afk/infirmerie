@@ -1,0 +1,15 @@
+code;libelle;unite;min;max;sexe;age_min;age_max
+URE;Urée;g/L;;;T;;
+GLY;Glycémie à jeun;g/L;;;T;;
+CREA;Créatinine;µmol/L;;;T;;
+CHOL;Cholestérol total;g/L;;;T;;
+HDL;HDL;g/L;;;T;;
+LDL;LDL;g/L;;;T;;
+TG;Triglycéride;g/L;;;T;;
+AUR;Acide urique;mg/L;;;T;;
+TGO;Transaminase (TGO/TGP);UI/L;;;T;;
+CA;Calcium;mg/L;;;T;;
+MG;Magnésium;mg/L;;;T;;
+BIL;Bilirubine (T+C);mg/L;;;T;;
+NA;Sodium;mmol/L;;;T;;
+K;Potassium;mmol/L;;;T;;
