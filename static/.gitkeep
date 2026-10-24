@@ -1,0 +1,6 @@
+Ce dossier existe pour satisfaire STATICFILES_DIRS.
+
+L'application n'utilise aucun fichier statique : les styles sont écrits
+directement dans templates/dossier/base.html. Ce fichier sert uniquement à
+ce que Git transporte le dossier vide, sans quoi Django signale au démarrage
+que son chemin n'existe pas.
