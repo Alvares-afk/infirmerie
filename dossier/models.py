@@ -321,30 +321,44 @@ class Mesure(models.Model):
     def anormalite(self):
         """normal | bas | haut | inconnu — compare la valeur aux normes.
 
-        Règle d'or : ne jamais conclure sans norme complète. On ne peut
-        affirmer « normal » que si la valeur est bornée des deux côtés : un
-        minimum sans maximum ne dit rien sur un résultat élevé.
+        Règle : on ne conclut que sur ce que le laboratoire a réellement borné.
 
-        Trois cas distincts, tous en « inconnu » :
-          - la valeur n'est pas numérique (« négatif », « traces »)
-          - aucune borne n'est renseignée
-          - une seule des deux bornes l'est
+          - deux bornes : comparaison complète.
+          - borne haute seule (« < 37 ») : le laboratoire définit lui-même la
+            normalité comme « sous ce plafond ». Une valeur en dessous est
+            donc normale, une valeur au-dessus est haute. C'est le cas des
+            enzymes (ASAT, ALAT) et cela évite qu'elles restent éternellement
+            « à qualifier » alors que le laboratoire a tranché.
+          - borne basse seule : le haut n'est pas évalué, on ne conclut pas.
+            Un résultat élevé pourrait être pathologique ; l'ignorer serait
+            plus grave que de ne rien dire.
+          - aucune borne, ou valeur non chiffrée (« négatif », « traces ») :
+            « inconnu », c'est-à-dire « à qualifier ».
 
-        Sans cette distinction, un résultat dont on ignore la norme
-        s'afficherait comme normal — donc rassurant. Or les fourchettes ne
-        sont pas encore alignées sur le laboratoire de l'établissement :
-        c'est le cas le plus fréquent aujourd'hui.
+        Dans tous les cas, on ne prononce jamais « normal » sur une valeur
+        dont la borne correspondante manque.
         """
         v = self.valeur_numerique
         if v is None:
             return "inconnu"
-        if self.norme_min is None or self.norme_max is None:
+
+        a_min = self.norme_min is not None
+        a_max = self.norme_max is not None
+        if not a_min and not a_max:
             return "inconnu"
-        if v < self.norme_min:
-            return "bas"
-        if v > self.norme_max:
+
+        if a_max and v > self.norme_max:
             return "haut"
-        return "normal"
+        if a_min and v < self.norme_min:
+            return "bas"
+
+        if a_max:
+            # Deux bornes, ou borne haute seule : le plafond est respecté.
+            return "normal"
+
+        # Borne basse seule : au-dessus du minimum, mais le haut reste non
+        # évalué.
+        return "inconnu"
 
     @property
     def est_anormal(self):

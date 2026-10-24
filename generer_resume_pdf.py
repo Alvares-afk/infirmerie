@@ -112,7 +112,9 @@ def encadre(titre, lignes, s, couleur=ORANGE, fond="#fffbeb"):
         ("LEFTPADDING", (0, 0), (-1, -1), 9),
         ("RIGHTPADDING", (0, 0), (-1, -1), 9),
     ]))
-    return t
+    # L'enveloppe empêche l'encadré d'être coupé entre deux pages : sans elle,
+    # le titre reste seul en bas de page et le texte reprend au suivant.
+    return KeepTogether(t)
 
 
 def pied(page, total):
@@ -138,7 +140,7 @@ def construire():
         ["Champ", "Valeur"],
         [
             ["Projet", f"<b>{BASE}</b>"],
-            ["Dépôt", "github.com/Alvares-afk/infirmerie (privé)"],
+            ["Dépôt", "github.com/Alvares-afk/infirmerie (public)"],
             ["Pile", "Django 6.1.1 · SQLite · Python 3.14 · Windows"],
             ["Date du document", aujourdhui],
             ["État", '<b><font color="#b00020">Application en service, à configurer avant usage réel</font></b>'],
@@ -182,9 +184,10 @@ def construire():
     F.append(Spacer(1, 6))
     F.append(encadre(
         "Règle d'or appliquée",
-        ["« Normal » n'est prononcé que si la valeur est <b>bornée des deux côtés</b>. "
+        ["« Normal » n'est prononcé que si le laboratoire a borné le côté qui compte. "
          "Trois cas donnent « à qualifier » : mention qualitative "
-         "(« négatif », « traces »), aucune norme, ou une seule des deux bornes. "
+         "(« négatif », « traces »), ou aucune borne. Une borne haute seule suffit "
+         "à conclure (enzymes), une borne basse seule non. "
          "Sans cette règle, un résultat dont on ignore la norme s'afficherait "
          "comme rassurant — le risque le plus grave possible ici."],
         s,
@@ -218,7 +221,7 @@ def construire():
     F.append(tableau(
         ["Contrôle", "Résultat"],
         [
-            ["Tests automatisés", "<b>81 passent</b> (parcours, permissions, journal, briefing, relances, références)"],
+            ["Tests automatisés", "<b>132 passent</b> (parcours, permissions, journal, briefing, relances, références, unités)"],
             ["Rendu des écrans", "12 écrans vérifiés pour les deux rôles"],
             ["Isolation des bases", "Vérifiée"],
             ["Sauvegarde / restauration", "Testées, y compris le refus de confusion"],
@@ -314,7 +317,7 @@ def construire():
             "<b>Lancer les vrais dossiers</b> : double-clic sur <code>demarrer_reel.bat</code><br/>"
             "<b>Lancer la démonstration</b> : <code>demarrer_demo.bat</code><br/>"
             "<b>Sauvegarder les vrais dossiers</b> : <code>sauvegarder_reel.bat</code><br/>"
-            "<b>Vérifier l'application</b> : <code>manage.py test dossier</code> (81 tests)",
+            "<b>Vérifier l'application</b> : <code>manage.py test dossier</code> (132 tests)",
         ],
         s, couleur=VERT, fond="#f0fdfa",
     ))

@@ -113,15 +113,25 @@ référence.
 
 - dans les normes → affichée neutre
 - au-dessus / en dessous → signalée, avec la valeur mise en évidence
-- **norme absente ou incomplète** → marquée *à qualifier*, jamais classée
-  normale
+- **norme absente** → marquée *à qualifier*, jamais classée normale
 
 Ce dernier point est une décision de conception, et la règle la plus
 importante du fichier. Une valeur numérique dont on ignore la norme
-s'afficherait comme normale — donc rassurante. Or une seule borne ne permet
-pas de conclure : un minimum sans maximum ne dit rien sur un résultat élevé.
-Les trois cas renvoient « inconnu » : valeur non numérique, aucune borne,
-une seule des deux bornes.
+s'afficherait comme normale — donc rassurante.
+
+Le traitement d'une **borne unique** distingue deux situations, parce que le
+laboratoire ne dit pas la même chose dans les deux cas :
+
+| Bornes fournies | Interprétation | Pourquoi |
+|---|---|---|
+| deux bornes | comparaison complète | cas normal |
+| **borne haute seule** (« < 37 ») | sous le plafond → normal, au-dessus → haut | le laboratoire définit lui-même la normalité comme « sous ce plafond ». C'est le cas des enzymes ASAT et ALAT |
+| **borne basse seule** | en dessous → bas, au-dessus → **à qualifier** | le haut reste non évalué ; un résultat élevé pourrait être pathologique |
+| aucune borne, ou valeur non chiffrée | **à qualifier** | rien ne permet de conclure |
+
+On ne prononce donc jamais « normal » sur une valeur dont la borne
+correspondante manque — et on ne prive pas d'interprétation les paramètres
+dont le laboratoire n'a borné que le haut.
 
 ### 4.3 bis Fourchettes de référence
 

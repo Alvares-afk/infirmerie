@@ -114,7 +114,8 @@ def construire():
          "« Ne jamais deviner une donnée médicale » n'est pas un rappel : c'est "
          "une branche du programme. Une valeur sans borne complète, ou non "
          "chiffrée (« négatif », « traces »), sort en « à qualifier » — jamais "
-         "en « normal ». Une seule borne ne suffit pas. Couvert par des tests."),
+         "en « normal ». Une borne haute seule suffit à conclure, une borne basse "
+         "seule non. Couvert par des tests."),
         ("Il n'envoie rien.",
          "Les relances sont des brouillons. L'écran le dit en haut, et un test "
          "échoue si un appel réseau apparaît dans le module. La validation "
