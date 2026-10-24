@@ -23,7 +23,9 @@ def normaliser(texte):
     """Minuscules sans accents, pour comparer des libellés saisis à la main."""
     # µ (micro) disparaîtrait à la conversion ASCII : on le ramène à « u »
     # avant, sinon « µmol/L » et « umol/L » ne se reconnaîtraient pas.
-    brut = str(texte).replace("µ", "u").replace("μ", "u")
+    # γ (gamma) de « γGT » disparaîtrait aussi : sans cette ligne, le libellé
+    # se réduit à « gt » et ne correspond plus à aucune entrée.
+    brut = str(texte).replace("µ", "u").replace("μ", "u").replace("γ", "g").replace("Γ", "g")
     sans_accents = (
         unicodedata.normalize("NFKD", brut)
         .encode("ascii", "ignore")
@@ -146,7 +148,19 @@ FOURCHETTES_PLAUSIBLES = {
         "mmol/l": (0.2, 20.0),
         "mg/dl": (10.0, 400.0),
     },
+    # « LDL Cholestérol » contient aussi « cholesterol » : la clé composite,
+    # plus longue, est testée d'abord et garde la bonne fourchette.
+    "ldl cholesterol": {
+        "g/l": (0.1, 6.0),
+        "mmol/l": (0.2, 20.0),
+        "mg/dl": (10.0, 400.0),
+    },
     "hdl": {
+        "g/l": (0.05, 3.0),
+        "mmol/l": (0.1, 8.0),
+        "mg/dl": (2.0, 150.0),
+    },
+    "hdl cholesterol": {
         "g/l": (0.05, 3.0),
         "mmol/l": (0.1, 8.0),
         "mg/dl": (2.0, 150.0),
@@ -166,6 +180,14 @@ FOURCHETTES_PLAUSIBLES = {
     "alat": {"ui/l": (0.0, 5000.0), "u/l": (0.0, 5000.0)},
     "ggt": {"ui/l": (0.0, 5000.0), "u/l": (0.0, 5000.0)},
     "phosphatases": {"ui/l": (0.0, 3000.0), "u/l": (0.0, 3000.0)},
+    "phosphore": {
+        "mg/l": (5.0, 100.0),
+        "mmol/l": (0.2, 5.0),
+    },
+    "chlore": {
+        "meq/l": (50.0, 150.0),
+        "mmol/l": (50.0, 150.0),
+    },
     "ferritine": {
         "ug/l": (0.5, 5000.0),
         "ng/ml": (0.5, 5000.0),

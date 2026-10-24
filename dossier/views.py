@@ -392,10 +392,21 @@ def bilan_create(request, consultation_pk):
         b.save()
         mesure_formset.instance = b
         mesure_formset.save()
+        # Les bornes non saisies viennent du laboratoire : sans cela, une
+        # mesure sans norme sort « à qualifier » et ne signale plus rien.
+        from .references import completer_mesures
+
+        completees = completer_mesures(b, c.patient)
         nb = b.nb_mesures
         journaliser(request, Action.CREATION, patient=c.patient, objet="bilan de sante",
                     details=f"{b.type_examen or 'bilan'} — {nb} mesure(s)")
-        messages.success(request, f"Bilan enregistré : {nb} mesure{'s' if nb > 1 else ''}.")
+        message = f"Bilan enregistré : {nb} mesure{'s' if nb > 1 else ''}."
+        if completees:
+            message += (
+                f" {completees} borne(s) complétée(s) depuis les fourchettes "
+                f"du laboratoire."
+            )
+        messages.success(request, message)
         return redirect("bilan_detail", pk=b.pk)
 
     return render(
