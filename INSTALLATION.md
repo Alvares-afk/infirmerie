@@ -48,8 +48,11 @@ cette case, rien ne fonctionnera et le message d'erreur sera obscur.
 5. Créer les trois comptes (sans aucun patient) :
 
    ```
-   .venv\Scripts\python.exe manage.py seed_demo --comptes
+   .venv\Scripts\python.exe manage.py creer_comptes
    ```
+
+   Les comptes sont créés **sans mot de passe utilisable** : personne ne peut
+   se connecter à ce stade, et c'est voulu. L'étape suivante est obligatoire.
 
 6. Définir les mots de passe — **ils ne sont pas fournis avec le paquet** :
 
