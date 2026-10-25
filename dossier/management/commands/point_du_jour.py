@@ -105,6 +105,11 @@ class Command(BaseCommand):
             help="Ajoute le nom du patient (donnée nominative : à éviter si "
                  "le message sort du poste).",
         )
+        parser.add_argument(
+            "--pdf",
+            action="store_true",
+            help="Écrit aussi le PDF dans sorties/ (envoi du matin).",
+        )
 
     def handle(self, *args, **options):
         data, elements = elements_du_jour(avec_noms=options["avec_noms"])
@@ -116,6 +121,13 @@ class Command(BaseCommand):
             self._sortie_json(data, elements)
         else:
             self._sortie_texte(data, elements)
+
+        if options["pdf"]:
+            # Import local : les deux commandes se référencent mutuellement,
+            # un import en tête de module créerait un cycle.
+            from .point_du_jour_pdf import ecrire_pdf
+
+            ecrire_pdf(data, elements)
 
         if options["enregistrer"]:
             self._enregistrer(elements)
