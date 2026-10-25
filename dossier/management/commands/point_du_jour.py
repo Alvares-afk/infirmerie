@@ -48,6 +48,45 @@ def empreinte(ligne):
     return hashlib.sha1(brut.encode("utf-8")).hexdigest()[:16]
 
 
+def elements_du_jour(avec_noms=False):
+    """Le point du jour sous forme de données, prêt à afficher ou à imprimer.
+
+    Partagé par la commande texte et par la commande PDF : une seule
+    définition de ce qui est signalé, donc aucun risque que les deux
+    versions divergent.
+    """
+    data = briefing_du_jour()
+    connues = set(Signalement.objects.values_list("empreinte", flat=True))
+
+    elements = []
+    for ligne in data["lignes"]:
+        marque = empreinte(ligne)
+        patient = ligne.patient
+        if patient is None:
+            identite = ""
+        elif avec_noms:
+            identite = f"{patient.numero_dossier} ({patient})"
+        else:
+            identite = patient.numero_dossier
+        elements.append({
+            "empreinte": marque,
+            "nouveau": marque not in connues,
+            "priorite": ligne.priorite,
+            "priorite_libelle": ligne.libelle_priorite,
+            "categorie": CATEGORIES.get(ligne.categorie, ligne.categorie),
+            "patient": identite,
+            "titre": ligne.titre,
+            "detail": ligne.detail,
+            "source": ligne.source,
+        })
+
+    # Tri global par priorité : le briefing est construit patient par patient,
+    # donc l'allergie sévère d'un patient arrivé en fin de liste se
+    # retrouverait après des suivis sans urgence.
+    elements.sort(key=lambda e: (e["priorite"], e["patient"], e["titre"]))
+    return data, elements
+
+
 class Command(BaseCommand):
     help = "Affiche le point du jour, prêt à être envoyé au soignant."
 
@@ -68,44 +107,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        data = briefing_du_jour()
-        lignes = data["lignes"]
+        data, elements = elements_du_jour(avec_noms=options["avec_noms"])
 
-        if not lignes:
+        if not elements:
             return  # sortie vide : rien à signaler, rien à envoyer
-
-        connues = set(Signalement.objects.values_list("empreinte", flat=True))
-        elements = []
-        for ligne in lignes:
-            marque = empreinte(ligne)
-            patient = ligne.patient
-            if patient is None:
-                identite = ""
-            elif options["avec_noms"]:
-                identite = f"{patient.numero_dossier} ({patient})"
-            else:
-                identite = patient.numero_dossier
-            elements.append({
-                "empreinte": marque,
-                "nouveau": marque not in connues,
-                "priorite": ligne.priorite,
-                "priorite_libelle": ligne.libelle_priorite,
-                "categorie": CATEGORIES.get(ligne.categorie, ligne.categorie),
-                "patient": identite,
-                "titre": ligne.titre,
-                "detail": ligne.detail,
-                "source": ligne.source,
-            })
-
-        # Tri global par priorité : le briefing est construit patient par
-        # patient, donc l'allergie sévère d'un patient arrivé en fin de liste
-        # se retrouverait après des suivis sans urgence.
-        elements.sort(key=lambda e: (e["priorite"], e["patient"], e["titre"]))
 
         if options["json"]:
             self._sortie_json(data, elements)
         else:
             self._sortie_texte(data, elements)
+
         if options["enregistrer"]:
             self._enregistrer(elements)
 
