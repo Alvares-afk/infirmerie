@@ -1,0 +1,12 @@
+# Fichiers présents dans le dépôt mais qui ne doivent pas partir
+# dans le paquet d'installation (git archive respecte export-ignore).
+#
+# Le guide d'installation, lui, EST livré : c'est la notice du client.
+
+# Notes de suivi internes du projet (état de l'agent, résumés d'avancement).
+Resume-*.pdf export-ignore
+Etat-agent-*.pdf export-ignore
+
+# Fichiers de développement
+.gitattributes export-ignore
+.gitignore export-ignore
