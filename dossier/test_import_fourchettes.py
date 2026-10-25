@@ -27,6 +27,11 @@ GLY;Glycémie à jeun;g/L;3,9;6,1;T;;
 HB;Hémoglobine;g/dL;16,5;11,5;T;;
 """
 
+HEMATOLOGIE = """code;libelle;unite;min;max;sexe;age_min;age_max
+HB;Hémoglobine;g/dL;12;16;T;;
+GB;Globules blancs;G/L;4;10;T;;
+"""
+
 
 class ImportFourchettes(TestCase):
     def setUp(self):
@@ -98,3 +103,29 @@ HB;Hémoglobine;g/dL;16,5;11,5;T;;
             ).exists(),
             "une fourchette en vigueur doit subsister",
         )
+
+    def test_une_seconde_feuille_ne_ferme_pas_les_parametres_absents(self):
+        """Le laboratoire remet ses normes par feuilles : hématologie, puis
+        biochimie. Importer la seconde ne doit pas effacer la première,
+        sinon ces paramètres retombent en « à qualifier » sans bruit."""
+        self._appeler(HEMATOLOGIE, "--laboratoire", "Labo Test")
+        self._appeler(VALIDE, "--laboratoire", "Labo Test")
+
+        en_vigueur = set(
+            ReferenceIntervalle.objects.filter(date_fin__isnull=True)
+            .values_list("code", flat=True)
+        )
+        self.assertIn("HB", en_vigueur, "l'hématologie doit rester en vigueur")
+        self.assertIn("GLY", en_vigueur, "la biochimie vient d'être chargée")
+
+    def test_remplacer_tout_ferme_aussi_les_codes_absents(self):
+        """Feuille complète : le comportement d'origine reste accessible."""
+        self._appeler(HEMATOLOGIE, "--laboratoire", "Labo Test")
+        self._appeler(VALIDE, "--laboratoire", "Labo Test", "--remplacer-tout")
+
+        en_vigueur = set(
+            ReferenceIntervalle.objects.filter(date_fin__isnull=True)
+            .values_list("code", flat=True)
+        )
+        self.assertNotIn("HB", en_vigueur)
+        self.assertIn("GLY", en_vigueur)

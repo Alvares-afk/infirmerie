@@ -76,6 +76,14 @@ class Command(BaseCommand):
             "--laboratoire",
             help="Nom du laboratoire (créé s'il n'existe pas).",
         )
+        parser.add_argument(
+            "--remplacer-tout",
+            dest="remplacer_tout",
+            action="store_true",
+            help="Ferme toutes les fourchettes du laboratoire, même les codes "
+                 "absents du fichier (feuille complète). Par défaut, seuls les "
+                 "codes du fichier sont remplacés.",
+        )
 
     def handle(self, *args, **options):
         chemin = Path(options["fichier"])
@@ -111,9 +119,24 @@ class Command(BaseCommand):
         with transaction.atomic():
             # Les fourchettes en vigueur sont closes, jamais supprimées :
             # un bilan ancien doit rester interprétable avec ses propres bornes.
-            closes = ReferenceIntervalle.objects.filter(
+            #
+            # Seuls les codes présents dans le fichier sont clos. Le
+            # laboratoire remet ses normes par feuilles séparées
+            # (hématologie, biochimie) : fermer tout ce qui est ouvert ferait
+            # disparaître la feuille précédente, et les paramètres concernés
+            # retomberaient en « à qualifier » sans que personne ne s'en
+            # aperçoive. Pour remplacer réellement l'ensemble, voir
+            # --remplacer-tout.
+            portee = ReferenceIntervalle.objects.filter(
                 laboratoire=laboratoire, date_fin__isnull=True
-            ).update(date_fin=aujourdhui - timedelta(days=1))
+            )
+            if options["remplacer_tout"]:
+                closes = portee.update(date_fin=aujourdhui - timedelta(days=1))
+            else:
+                codes = {ligne["code"] for ligne in lignes}
+                closes = portee.filter(code__in=codes).update(
+                    date_fin=aujourdhui - timedelta(days=1)
+                )
 
             for ligne in lignes:
                 ReferenceIntervalle.objects.create(
