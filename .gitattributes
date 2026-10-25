@@ -7,6 +7,20 @@
 Resume-*.pdf export-ignore
 Etat-agent-*.pdf export-ignore
 
+# Outils d'exposition réseau : ils n'ont rien à faire sur le poste qui
+# contient les dossiers réels. Une fausse manipulation suffirait à publier
+# l'application sur Internet. L'accès distant passe par le VPN, expliqué
+# dans le guide.
+demo_tunnel.py export-ignore
+ouvrir_pare-feu.bat export-ignore
+demarrer_reseau.bat export-ignore
+demarrer_reseau.py export-ignore
+
+# Générateurs de documents internes.
+generer_resume_pdf.py export-ignore
+generer_etat_agent_pdf.py export-ignore
+generer_installation_pdf.py export-ignore
+
 # Fichiers de développement
 .gitattributes export-ignore
 .gitignore export-ignore
