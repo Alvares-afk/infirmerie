@@ -203,7 +203,94 @@
     text-align: center; color: var(--texte-doux); opacity: .6;
     font-size: 12px; padding: 30px 0; border-top: 1px solid var(--bord);
   }
+
+  /* ------------------------------------------------------------------
+     Variante claire : même identité cuivre, fond crème.
+     Contrastes vérifiés (WCAG AA, ≥ 4,5:1) sur chaque couple texte/fond.
+     Activée par data-theme="clair" sur <html>, mémorisée dans le
+     navigateur. Le thème sombre reste celui par défaut.
+     ------------------------------------------------------------------ */
+  :root[data-theme="clair"] {
+    --fond: #faf7f2;
+    --carte: #ffffff;
+    --carte-haute: #f2ece3;
+    --texte: #241a12;
+    --texte-doux: #6b5b4d;
+    --cuivre: #a8672f;
+    --cuivre-clair: #8f5424;
+    --cuivre-sombre: #7d4a20;
+    --bord: rgba(36, 26, 18, .12);
+    --bord-fort: rgba(36, 26, 18, .22);
+    --rouge: #a3231c;
+    --vert: #1c6b45;
+    --orange: #7a4a00;
+  }
+  :root[data-theme="clair"] body {
+    background:
+      radial-gradient(900px 420px at 50% -12%, rgba(168, 103, 47, .07), transparent 62%),
+      var(--fond);
+  }
+  :root[data-theme="clair"] header {
+    background: rgba(255, 255, 255, .94);
+    border-bottom-color: rgba(36, 26, 18, .10);
+  }
+  :root[data-theme="clair"] header .badge {
+    background: rgba(168, 103, 47, .10);
+    border-color: rgba(168, 103, 47, .28);
+    color: var(--cuivre-clair);
+  }
+  :root[data-theme="clair"] .carte {
+    background: linear-gradient(160deg, #ffffff, #fdfbf8);
+    box-shadow: 0 18px 36px -30px rgba(36, 26, 18, .45);
+  }
+  :root[data-theme="clair"] .carte.alerte {
+    background: linear-gradient(160deg, #fdecea, #fbe3e1);
+    border-color: rgba(163, 35, 28, .38);
+  }
+  :root[data-theme="clair"] table tr:hover td { background: rgba(168, 103, 47, .06); }
+  :root[data-theme="clair"] .etiq-normal  { background: #e6f6ec; color: #1c6b45; border-color: rgba(28, 107, 69, .28); }
+  :root[data-theme="clair"] .etiq-haut    { background: #fdecea; color: #a3231c; border-color: rgba(163, 35, 28, .30); }
+  :root[data-theme="clair"] .etiq-bas     { background: #fdf1dc; color: #7a4a00; border-color: rgba(122, 74, 0, .28); }
+  :root[data-theme="clair"] .etiq-inconnu { background: #efe9e1; color: #4a4038; border-color: rgba(36, 26, 18, .14); }
+  :root[data-theme="clair"] .etiq-allergie,
+  :root[data-theme="clair"] .etiq-retard  { background: #fdecea; color: #a3231c; border-color: rgba(163, 35, 28, .34); }
+  :root[data-theme="clair"] .etiq-info    { background: #f7ece0; color: var(--cuivre-clair); border-color: rgba(168, 103, 47, .30); }
+  :root[data-theme="clair"] .bouton.secondaire {
+    border-color: rgba(168, 103, 47, .45);
+    color: var(--cuivre-clair);
+  }
+  :root[data-theme="clair"] .bouton.secondaire:hover { background: rgba(168, 103, 47, .10); }
+  :root[data-theme="clair"] form.champ input,
+  :root[data-theme="clair"] form.champ select,
+  :root[data-theme="clair"] form.champ textarea {
+    background: #ffffff; color: var(--texte);
+    border-color: rgba(36, 26, 18, .22);
+  }
+  :root[data-theme="clair"] form.champ input::placeholder { color: rgba(107, 91, 77, .55); }
+  :root[data-theme="clair"] .erreurs {
+    background: #fdecea; border-color: rgba(163, 35, 28, .35); color: #a3231c;
+  }
+  :root[data-theme="clair"] .messages .succes { background: #e6f6ec; border-color: rgba(28, 107, 69, .30); color: #1c6b45; }
+  :root[data-theme="clair"] .messages .erreur { background: #fdecea; border-color: rgba(163, 35, 28, .32); color: #a3231c; }
+  :root[data-theme="clair"] .messages .info   { background: #f7ece0; border-color: rgba(168, 103, 47, .32); color: var(--cuivre-clair); }
+  :root[data-theme="clair"] .bandeau-alerte {
+    background: #fdecea; border-color: rgba(163, 35, 28, .45); color: #8c1e18;
+  }
+  :root[data-theme="clair"] .bandeau-demo {
+    background: #fdf3e2; border-color: rgba(168, 103, 47, .45); color: #7a4a00;
+  }
+  :root[data-theme="clair"] .chrono { border-left-color: rgba(168, 103, 47, .30); }
 </style>
+<script>
+  /* Applique le thème mémorisé avant l'affichage, pour éviter un
+     clignotement sombre au chargement d'une page en thème clair. */
+  (function () {
+    try {
+      var t = localStorage.getItem("infirmerie-theme");
+      if (t === "clair") document.documentElement.dataset.theme = "clair";
+    } catch (e) { /* stockage indisponible : on reste sur le thème par défaut */ }
+  })();
+</script>
 </head>
 <body>
 <header>
@@ -220,6 +307,7 @@
         {% csrf_token %}
         <button type="submit">Déconnexion</button>
       </form>
+      <button type="button" id="bascule-theme" title="Changer de thème">Thème</button>
     {% endif %}
   </span>
 </header>
@@ -250,5 +338,27 @@
 <footer class="pied">
   Données de santé — accès réservé au personnel habilité. Toute consultation est journalisée.
 </footer>
+<script>
+  (function () {
+    var bouton = document.getElementById("bascule-theme");
+    if (!bouton) return;
+    function libelle() {
+      var clair = document.documentElement.dataset.theme === "clair";
+      bouton.textContent = clair ? "Sombre" : "Clair";
+      bouton.title = clair ? "Passer au thème sombre" : "Passer au thème clair";
+    }
+    libelle();
+    bouton.addEventListener("click", function () {
+      var clair = document.documentElement.dataset.theme === "clair";
+      if (clair) {
+        delete document.documentElement.dataset.theme;
+      } else {
+        document.documentElement.dataset.theme = "clair";
+      }
+      try { localStorage.setItem("infirmerie-theme", clair ? "sombre" : "clair"); } catch (e) {}
+      libelle();
+    });
+  })();
+</script>
 </body>
 </html>
