@@ -170,7 +170,22 @@ def construire():
     F.append(Spacer(1, 12))
 
     # ------------------------------------------------------------ page 2
-    F.append(etape(5, "Vérifier que les trois comptes se connectent", s))
+    F.append(etape(5, "Charger les fourchettes de référence", s))
+    F.append(bloc_code(
+        ".venv\\Scripts\\python.exe manage.py charger_references\n"
+        ".venv\\Scripts\\python.exe manage.py importer_fourchettes fourchettes-biochimie.csv",
+        s,
+    ))
+    F.append(Paragraph(
+        "La première commande installe les treize paramètres d'hématologie, la "
+        "seconde les vingt-huit de biochimie. <b>Sans elles, toutes les valeurs "
+        "ressortiront « à qualifier »</b> : l'application ne signalera aucune "
+        "anomalie. Le fichier CSV est fourni à la racine du paquet.",
+        s["corps"],
+    ))
+    F.append(Spacer(1, 8))
+
+    F.append(etape(6, "Vérifier que les trois comptes se connectent", s))
     F.append(bloc_code(
         ".venv\\Scripts\\python.exe manage.py verifier_connexion\n"
         ".venv\\Scripts\\python.exe manage.py check",
@@ -183,7 +198,7 @@ def construire():
     ))
     F.append(Spacer(1, 8))
 
-    F.append(etape(6, "Lancer l'application", s))
+    F.append(etape(7, "Lancer l'application", s))
     F.append(Paragraph(
         "Double-cliquer sur <font face='Courier'>lancer.py</font>. Le navigateur "
         "s'ouvre sur l'application. Pour un raccourci sur le Bureau : clic droit "
@@ -215,10 +230,11 @@ def construire():
             ["4 — comptes", "« 3 compte(s) créé(s) : dr.benali, secretariat, admin »"],
             ["4 — mots de passe", "Le fichier <font face='Courier'>acces-comptes.txt</font> "
                                   "existe et contient trois lignes."],
-            ["5 — connexions", "Trois lignes « ok », puis « Tous les comptes se connectent. »"],
-            ["5 — check", "« System check identified no issues »"],
-            ["6 — lancement", "La page de connexion s'affiche dans le navigateur."],
-            ["6 — connexion réelle", "Se connecter avec dr.benali : l'accueil "
+            ["5 — fourchettes", "« Aucune incohérence détectée » (verifier_unites)"],
+            ["6 — connexions", "Trois lignes « ok », puis « Tous les comptes se connectent. »"],
+            ["6 — check", "« System check identified no issues »"],
+            ["7 — lancement", "La page de connexion s'affiche dans le navigateur."],
+            ["7 — connexion réelle", "Se connecter avec dr.benali : l'accueil "
                                      "s'affiche, sans erreur."],
         ],
         [42 * mm, 128 * mm], s,

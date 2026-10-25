@@ -63,7 +63,22 @@ cette case, rien ne fonctionnera et le message d'erreur sera obscur.
    Les mots de passe sont écrits une seule fois dans `acces-comptes.txt`.
    Les noter, puis **supprimer ce fichier**.
 
-7. Vérifier que les trois comptes se connectent :
+7. Charger les fourchettes de référence du laboratoire :
+
+   ```
+   .venv\Scripts\python.exe manage.py charger_references
+   .venv\Scripts\python.exe manage.py importer_fourchettes fourchettes-biochimie.csv
+   ```
+
+   La première commande installe les 13 paramètres d'hématologie, la seconde
+   les 28 de biochimie. **Sans ces deux commandes, toutes les valeurs
+   ressortiront « à qualifier »** : l'application ne signalera aucune anomalie.
+   Le second fichier est fourni à la racine du paquet.
+
+   Contrôle : `.venv\Scripts\python.exe manage.py verifier_unites` doit
+   répondre « Aucune incohérence détectée ».
+
+8. Vérifier que les trois comptes se connectent :
 
    ```
    .venv\Scripts\python.exe manage.py verifier_connexion --mot-de-passe "<celui choisi>"
