@@ -8,6 +8,8 @@ Usage : python manage.py verifier_connexion
 """
 
 from django.contrib.auth import get_user_model
+import os
+
 from django.core.management.base import BaseCommand
 from django.test import Client
 
@@ -35,7 +37,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
         mots = comptes.lire()
-        impose = options.get("mot_de_passe")
+        # Voir renouveler_mots_de_passe : l'environnement evite que le
+        # mot de passe apparaisse dans la ligne de commande du processus.
+        impose = options.get("mot_de_passe") or os.environ.get("INFIRMERIE_MDP")
         echecs = 0
 
         entete = f"{'compte':<14} {'mdp':<6} {'session':<10} {'arrivee':<22} rôle attendu"

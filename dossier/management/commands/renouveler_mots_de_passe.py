@@ -12,6 +12,7 @@ Usage :
     python manage.py renouveler_mots_de_passe --comptes dr.benali secretariat
 """
 
+import os
 import secrets
 
 from django.contrib.auth import get_user_model
@@ -58,7 +59,11 @@ class Command(BaseCommand):
             raise CommandError("Aucun compte à traiter.")
 
         generee = []
-        impose = options.get("mot_de_passe")
+        # Le mot de passe peut venir de la ligne de commande ou de
+        # l'environnement. L'installateur utilise l'environnement : un
+        # argument est visible dans le gestionnaire de taches par tout
+        # utilisateur de la session, une variable d'environnement non.
+        impose = options.get("mot_de_passe") or os.environ.get("INFIRMERIE_MDP")
         for utilisateur in utilisateurs:
             # token_urlsafe : aléatoire cryptographique, sans caractère ambigu
             # à recopier depuis un écran.

@@ -53,9 +53,17 @@ def arreter(message):
     sys.exit(1)
 
 
-def executer(commande, cwd=RACINE, silencieux=False):
+def executer(commande, cwd=RACINE, silencieux=False, env_sup=None):
+    """Lance une commande fixe, sans shell.
+
+    `commande` est toujours une liste deja construite : aucun texte n'est
+    confie a un interprete, donc aucune chaine ne peut devenir une commande.
+    """
+    environnement = dict(ENVIRONNEMENT)
+    if env_sup:
+        environnement.update(env_sup)
     resultat = subprocess.run(
-        commande, cwd=str(cwd), env=ENVIRONNEMENT,
+        commande, cwd=str(cwd), env=environnement, shell=False,
         capture_output=silencieux, text=True,
         encoding="utf-8", errors="replace",
     )
@@ -152,9 +160,11 @@ def main():
     print("  dr.benali (soignant), secretariat, admin.")
 
     mot_de_passe = demander_mot_de_passe()
+    # Par l'environnement, jamais en argument : un argument se lit dans le
+    # gestionnaire de taches, une variable d'environnement non.
     executer(
-        [str(PYTHON), "manage.py", "renouveler_mots_de_passe", "--mot-de-passe", mot_de_passe],
-        silencieux=True,
+        [str(PYTHON), "manage.py", "renouveler_mots_de_passe"],
+        silencieux=True, env_sup={"INFIRMERIE_MDP": mot_de_passe},
     )
     print("  Mot de passe applique aux trois comptes.")
 
@@ -192,8 +202,8 @@ def main():
     # ---------------------------------------------------------------- 7/7
     etape(7, TOTAL, "Verification")
     controle = executer(
-        [str(PYTHON), "manage.py", "verifier_connexion", "--mot-de-passe", mot_de_passe],
-        silencieux=True,
+        [str(PYTHON), "manage.py", "verifier_connexion"],
+        silencieux=True, env_sup={"INFIRMERIE_MDP": mot_de_passe},
     )
     if "Tous les comptes se connectent" not in (controle.stdout or ""):
         arreter(
