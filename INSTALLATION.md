@@ -99,6 +99,10 @@ Pour un raccourci sur le Bureau : clic droit sur `lancer.py` → *Envoyer vers* 
 L'adresse `http://infirmerie` (sans numéro de port) demande une modification du
 fichier hosts de Windows, réservée à l'administrateur : `installer_nom.bat`.
 
+**La base utilisée est `db_reelle.sqlite3`.** C'est elle qui contient les
+dossiers ; c'est elle qu'il faut sauvegarder et déplacer. La base de
+démonstration n'est pas livrée avec ce paquet.
+
 ---
 
 ## 5. Tâches automatiques
