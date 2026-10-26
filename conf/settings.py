@@ -41,8 +41,17 @@ def _bool_environ(nom, defaut=False):
 # Cette clé signe les cookies de session : qui la possède peut forger une
 # session administrateur. Elle ne doit jamais être écrite dans ce fichier.
 _secret = os.environ.get("INFIRMERIE_SECRET_KEY", "").strip()
+
+# Poste réellement installé : l'installateur a déposé une clé propre à ce
+# poste dans .secret-key (hors Git). Sa présence vaut signature « ce n'est
+# plus une machine de développement » : on passe alors en mode production,
+# avec les journaux d'erreur masqués.
+_POSTE_INSTALLE = (BASE_DIR / ".secret-key").exists()
+
 if not _secret:
-    if _bool_environ("INFIRMERIE_DEBUG", True):
+    if _POSTE_INSTALLE:
+        _secret = (BASE_DIR / ".secret-key").read_text(encoding="utf-8").strip()
+    elif _bool_environ("INFIRMERIE_DEBUG", True):
         # Développement : clé conservée dans un fichier local ignoré par Git.
         # Éphémère, elle aurait cassé toutes les sessions à chaque redémarrage :
         # le soignant se retrouvait déconnecté sans comprendre pourquoi.
@@ -67,8 +76,9 @@ SECRET_KEY = _secret
 # variables : c'est une fuite d'information.
 # Par défaut on est en développement (DEBUG actif) tant que la variable
 # n'a pas été posée explicitement. Un poste qui démarre sans configuration
-# doit rester utilisable.
-DEBUG = _bool_environ("INFIRMERIE_DEBUG", True)
+# doit rester utilisable. Mais dès que l'installateur a signé le poste
+# (.secret-key), le défaut s'inverse : plus de traces à l'écran.
+DEBUG = _bool_environ("INFIRMERIE_DEBUG", not _POSTE_INSTALLE)
 
 # Accès local uniquement. L'accès distant passe par le VPN, pas par une IP
 # publique : il n'y a donc rien à ajouter ici par défaut.

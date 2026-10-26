@@ -86,7 +86,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
 
     os.chdir(RACINE)
-    TOTAL = 6
+    TOTAL = 7
 
     titre("Installation de l'application Infirmerie")
 
@@ -160,8 +160,28 @@ def main():
         )
     print("  41 fourchettes chargees (13 hematologie, 28 biochimie).")
 
-    # ---------------------------------------------------------------- 6/6
-    etape(6, TOTAL, "Verification")
+    # ---------------------------------------------------------------- 6/7
+    etape(6, TOTAL, "Passage en mode production")
+    # La clé signe les sessions : propre à ce poste, elle ne doit pas être
+    # celle d'un autre. Sa présence bascule l'application hors du mode
+    # développement (plus de traces d'erreur détaillées à l'écran).
+    cle = RACINE / ".secret-key"
+    if not cle.exists():
+        import secrets as _secrets
+
+        cle.write_text(_secrets.token_urlsafe(64), encoding="utf-8")
+        print("  Cle de signature creee pour ce poste.")
+    else:
+        print("  Cle de signature deja presente, conservee.")
+
+    # Les fichiers statiques doivent être rassemblés : en production, c'est
+    # WhiteNoise qui les sert, pas le serveur de développement.
+    executer([str(PYTHON), "manage.py", "collectstatic", "--noinput"], silencieux=True)
+    print("  Fichiers d'affichage rassembles.")
+    print("  Mode production actif : les erreurs ne s'affichent plus en detail.")
+
+    # ---------------------------------------------------------------- 7/7
+    etape(7, TOTAL, "Verification")
     controle = executer(
         [str(PYTHON), "manage.py", "verifier_connexion", "--mot-de-passe", mot_de_passe],
         silencieux=True,

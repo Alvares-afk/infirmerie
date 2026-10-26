@@ -71,3 +71,6 @@ acces-comptes.txt
 
 # Point du jour genere chaque matin (regenerable a tout moment).
 sorties/
+
+# Cle de signature du poste installe, creee par installer.py.
+.secret-key
