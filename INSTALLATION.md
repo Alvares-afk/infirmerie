@@ -1,6 +1,10 @@
 # Installer l'application Infirmerie
 
-Ce document s'adresse à la personne qui installe le poste, pas à l'utilisatrice.
+Deux publics, deux chemins :
+
+- **La personne qui installe le poste** lit ce document.
+- **La personne qui utilisera l'application** a une fiche d'une page :
+  `INSTALLER-EN-5-ETAPES.pdf`, à imprimer et à lui remettre.
 
 ---
 
@@ -11,84 +15,81 @@ Ce document s'adresse à la personne qui installe le poste, pas à l'utilisatric
 | Windows | 10 ou 11 |
 | Python | 3.12 ou plus récent — <https://www.python.org/downloads/windows/> |
 | Espace disque | 300 Mo environ |
-| Réseau | aucun accès Internet nécessaire après l'installation |
+| Réseau | Internet **pendant** l'installation, aucun accès ensuite |
 
 **Pendant l'installation de Python, cocher « Add python.exe to PATH ».** Sans
 cette case, rien ne fonctionnera et le message d'erreur sera obscur.
 
 ---
 
-## 2. Installer
+## 2. Installation simple (recommandée)
 
-1. Copier le dossier de l'application à l'emplacement définitif, par exemple
-   `C:\Infirmerie`. Éviter le Bureau et les dossiers synchronisés (OneDrive,
-   Dropbox) : un fichier de base de données déplacé pendant une écriture se
-   corrompt.
+1. Copier le dossier à l'emplacement définitif : `C:\Infirmerie`. Éviter le
+   Bureau et les dossiers synchronisés (OneDrive, Dropbox) : une base de
+   données déplacée pendant une écriture se corrompt.
 
-2. Ouvrir une invite de commandes **dans ce dossier** :
+2. **Double-cliquer sur `installer.bat`.**
 
-   ```
-   cd C:\Infirmerie
-   ```
+3. Appuyer sur Entrée, puis saisir le mot de passe deux fois quand il le
+   demande. Rien ne s'affiche pendant la frappe.
 
-3. Créer l'environnement Python et installer les dépendances :
+L'installateur enchaîne alors sept étapes :
 
-   ```
-   python -m venv .venv
-   .venv\Scripts\python.exe -m pip install --upgrade pip
-   .venv\Scripts\python.exe -m pip install -r requirements.txt
-   ```
+| # | Étape | Ce qu'elle fait |
+|---|---|---|
+| 1 | Environnement | Crée `.venv`, isolé du reste du PC |
+| 2 | Composants | Télécharge Django et ses dépendances |
+| 3 | Base | Prépare une base vide, aucun dossier patient |
+| 4 | Comptes | Crée `dr.benali`, `secretariat`, `admin` et applique le mot de passe |
+| 5 | Fourchettes | Charge 13 paramètres d'hématologie et 28 de biochimie |
+| 6 | Production | Crée la clé de signature du poste et rassemble les fichiers d'affichage |
+| 7 | Vérification | Contrôle que les trois comptes se connectent |
 
-4. Créer la base de données :
+**Si une étape échoue, l'installation s'arrête.** Elle ne laisse jamais un
+poste à moitié configuré : le message indique quoi faire.
 
-   ```
-   .venv\Scripts\python.exe manage.py migrate
-   ```
-
-5. Créer les trois comptes (sans aucun patient) :
-
-   ```
-   .venv\Scripts\python.exe manage.py creer_comptes
-   ```
-
-   Les comptes sont créés **sans mot de passe utilisable** : personne ne peut
-   se connecter à ce stade, et c'est voulu. L'étape suivante est obligatoire.
-
-6. Définir les mots de passe — **ils ne sont pas fournis avec le paquet** :
-
-   ```
-   .venv\Scripts\python.exe manage.py renouveler_mots_de_passe
-   ```
-
-   Les mots de passe sont écrits une seule fois dans `acces-comptes.txt`.
-   Les noter, puis **supprimer ce fichier**.
-
-7. Charger les fourchettes de référence du laboratoire :
-
-   ```
-   .venv\Scripts\python.exe manage.py charger_references
-   .venv\Scripts\python.exe manage.py importer_fourchettes fourchettes-biochimie.csv
-   ```
-
-   La première commande installe les 13 paramètres d'hématologie, la seconde
-   les 28 de biochimie. **Sans ces deux commandes, toutes les valeurs
-   ressortiront « à qualifier »** : l'application ne signalera aucune anomalie.
-   Le second fichier est fourni à la racine du paquet.
-
-   Contrôle : `.venv\Scripts\python.exe manage.py verifier_unites` doit
-   répondre « Aucune incohérence détectée ».
-
-8. Vérifier que les trois comptes se connectent :
-
-   ```
-   .venv\Scripts\python.exe manage.py verifier_connexion --mot-de-passe "<celui choisi>"
-   ```
-
-   La commande doit afficher « Tous les comptes se connectent. »
+> Le mot de passe n'est **jamais** écrit sur le disque. Il n'existe que dans
+> la tête de la personne qui le saisit.
 
 ---
 
-## 3. Lancer
+## 3. Annexe : installation manuelle
+
+Pour un poste où l'installateur ne peut pas être utilisé, ou pour recommencer
+une étape après une erreur.
+
+```
+cd C:\Infirmerie
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe manage.py migrate
+.venv\Scripts\python.exe manage.py creer_comptes
+.venv\Scripts\python.exe manage.py renouveler_mots_de_passe --mot-de-passe "<phrase choisie>"
+.venv\Scripts\python.exe manage.py charger_references
+.venv\Scripts\python.exe manage.py importer_fourchettes fourchettes-biochimie.csv
+.venv\Scripts\python.exe manage.py collectstatic --noinput
+```
+
+Puis créer la clé de signature du poste, qui bascule l'application en mode
+production (plus de traces d'erreur détaillées à l'écran) :
+
+```
+.venv\Scripts\python.exe -c "import secrets,pathlib; pathlib.Path('.secret-key').write_text(secrets.token_urlsafe(64))"
+```
+
+Contrôles :
+
+```
+.venv\Scripts\python.exe manage.py verifier_connexion --mot-de-passe "<phrase choisie>"
+.venv\Scripts\python.exe manage.py verifier_unites
+```
+
+Attendu : « Tous les comptes se connectent. » et « Aucune incohérence détectée ».
+
+---
+
+## 4. Lancer
 
 Double-cliquer sur **`lancer.py`**. L'application s'ouvre dans le navigateur.
 
@@ -100,58 +101,90 @@ fichier hosts de Windows, réservée à l'administrateur : `installer_nom.bat`.
 
 ---
 
-## 4. Sauvegardes
+## 5. Tâches automatiques
 
-**À faire dès l'installation**, sinon rien n'est protégé.
+### Sauvegarde — à faire le jour de l'installation
 
-- `sauvegarder_reel.bat` sauvegarde les vrais dossiers (`db_reelle.sqlite3`)
-- `sauvegarder.bat` sauvegarde la base de démonstration
+Double-cliquer sur **`installer_sauvegarde.bat`**. Une tâche Windows est créée :
+chaque lundi à 12h30, `sauvegarde_auto.bat` copie `db_reelle.sqlite3` dans
+`sauvegardes/` et écrit une ligne dans `sauvegardes\journal_sauvegarde.log`.
 
-Planifier la première dans le Planificateur de tâches Windows, une fois par
-jour, à une heure où le poste est allumé.
+Heure différente : `installer_sauvegarde.bat 18:00`.
+
+Vérifier qu'elle tourne vraiment : attendre le lendemain, puis ouvrir
+`journal_sauvegarde.log`. Un journal vide au bout d'une semaine signifie que
+la tâche ne s'exécute pas.
 
 **Une sauvegarde sur le même disque ne protège pas d'une panne de disque.**
-Copier régulièrement le contenu de `sauvegardes/` sur une clé USB.
+Copier régulièrement `sauvegardes/` sur une clé USB.
 
-Pour vérifier qu'une sauvegarde est réellement restaurable :
+Contrôler qu'une sauvegarde est restaurable :
 
 ```
 .venv\Scripts\python.exe manage.py verifier_restauration
 ```
 
----
+### Point du jour
 
-## 5. Ce que ce paquet ne contient pas
+Double-cliquer sur **`installer_point_du_jour.bat`** : chaque matin à 7h30,
+`point_du_jour_local.bat` écrit `sorties\point-du-jour-<date>.pdf`.
 
-**Aucune donnée patient.** La base est vide à l'installation. La base de
-démonstration, si elle est utilisée, ne contient que des patients fictifs.
+Le PDF reste sur le poste, il n'est envoyé nulle part. Si le poste est éteint à
+l'heure prévue, Windows ne rattrape pas : relancer `point_du_jour_local.bat` à
+la main.
 
-**Aucun mot de passe.** Voir l'étape 6.
-
-**Le message quotidien de 6 h.** Il est produit par un ordonnanceur externe
-(Hermes) installé sur le poste de développement, pas par l'application
-elle-même. Sur ce poste, `manage.py point_du_jour` affiche le texte dans la
-console, mais ne l'envoie nulle part. Pour l'envoyer, il faut soit installer
-cet ordonnanceur, soit une tâche planifiée qui transmet la sortie.
+**Le message de 6 h sur téléphone n'existe pas sur ce poste.** Il est produit
+par un ordonnanceur externe installé sur le poste de développement.
 
 ---
 
-## 6. Avant la mise en service réelle
+## 6. Conservation des dossiers
 
-- [ ] `verifier_connexion` passe pour les trois comptes
-- [ ] Mots de passe notés, `acces-comptes.txt` supprimé
+Aucune purge automatique n'est armée. Quand la durée de conservation est
+arrêtée avec l'établissement, la commande existe :
+
+```
+.venv\Scripts\python.exe manage.py purger --avant 2021-01-01
+```
+
+Sans `--confirmer`, elle affiche seulement ce qu'elle supprimerait. Avec,
+elle supprime et inscrit l'opération au journal d'accès — trace qui, elle,
+n'est jamais effacée.
+
+**Ne jamais lancer cette commande sur une base dont la sauvegarde n'a pas été
+vérifiée.**
+
+---
+
+## 7. Ce que ce paquet ne contient pas
+
+**Aucune donnée patient.** La base est vide à l'installation.
+
+**Aucun mot de passe.**
+
+**Aucun outil d'ouverture réseau** (tunnel, règle de pare-feu). L'accès
+distant passe par un VPN, jamais par une IP publique.
+
+---
+
+## 8. Avant la mise en service réelle
+
+- [ ] Les trois comptes se connectent
+- [ ] Mot de passe noté, fiche d'accès rangée
 - [ ] Sauvegarde planifiée **et** restauration testée
-- [ ] Fourchettes de biochimie chargées (`importer_fourchettes`) — sinon les
-      résultats de biochimie resteront « à qualifier »
+- [ ] Point du jour planifié (ou décision de ne pas l'utiliser)
 - [ ] Durée de conservation des dossiers définie avec l'établissement
+- [ ] Chiffrement du disque (BitLocker) activé si le poste est transportable
 
 ---
 
-## 7. En cas de problème
+## 9. En cas de problème
 
 | Symptôme | Cause probable |
 |---|---|
 | `python` n'est pas reconnu | La case « Add to PATH » n'était pas cochée à l'installation |
+| L'installateur s'arrête à l'étape 2 | Pas d'accès Internet sur ce poste |
 | Page blanche ou erreur 400 | Adresse incorrecte : utiliser celle affichée par `lancer.py` |
-| « Identifiant ou mot de passe incorrect » | Vérifier qu'on est bien sur **ce** poste, pas une autre copie de l'application |
+| L'application s'affiche sans style | `collectstatic` n'a pas été exécuté (annexe, section 3) |
+| « Identifiant ou mot de passe incorrect » | Vérifier qu'on est bien sur **ce** poste, pas une autre copie |
 | Le port est déjà pris | Une autre fenêtre de l'application est restée ouverte |

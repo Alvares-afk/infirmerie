@@ -7,6 +7,10 @@
 Resume-*.pdf export-ignore
 Etat-agent-*.pdf export-ignore
 
+# Ancienne notice détaillée, remplacée par INSTALLATION.md et par la fiche
+# d'une page INSTALLER-EN-5-ETAPES.pdf.
+Installation-Infirmerie-*.pdf export-ignore
+
 # Outils d'exposition réseau : ils n'ont rien à faire sur le poste qui
 # contient les dossiers réels. Une fausse manipulation suffirait à publier
 # l'application sur Internet. L'accès distant passe par le VPN, expliqué
