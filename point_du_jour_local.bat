@@ -10,6 +10,10 @@ cd /d "%~dp0"
 if not exist "sorties" mkdir "sorties"
 set "JOURNAL=sorties\journal_point_du_jour.log"
 
+rem 1. Preparer les relances (brouillons seulement, jamais d'envoi).
+".venv\Scripts\python.exe" manage.py preparer_relances >> "%JOURNAL%" 2>&1
+
+rem 2. Produire le PDF du point du jour.
 ".venv\Scripts\python.exe" manage.py point_du_jour --pdf --enregistrer >> "%JOURNAL%" 2>&1
 
 if errorlevel 1 (
