@@ -33,3 +33,8 @@ demarrer_demo.bat export-ignore
 # Fichiers de développement
 .gitattributes export-ignore
 .gitignore export-ignore
+
+# Binaires : jamais de conversion de fins de ligne.
+*.pdf binary
+*.woff2 binary
+*.zip binary
