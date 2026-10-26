@@ -25,6 +25,11 @@ generer_resume_pdf.py export-ignore
 generer_etat_agent_pdf.py export-ignore
 generer_installation_pdf.py export-ignore
 
+# Mode demonstration : inutile chez le client, et dangereux par confusion.
+# Cette base n'a ni comptes ni dossiers : le lanceur y mene a un ecran de
+# connexion qui refuse tout, sans explication.
+demarrer_demo.bat export-ignore
+
 # Fichiers de développement
 .gitattributes export-ignore
 .gitignore export-ignore

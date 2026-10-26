@@ -18,6 +18,15 @@ RACINE = Path(__file__).resolve().parent
 VENV = RACINE / ".venv"
 PYTHON = VENV / "Scripts" / "python.exe"
 
+# Toute l'installation vise la base des VRAIS dossiers. La base de
+# démonstration existe à côté, mais elle n'a ni comptes ni dossiers : s'y
+# tromper donne un écran de connexion qui refuse tout, sans message clair.
+ENVIRONNEMENT = {
+    **os.environ,
+    "INFIRMERIE_BASE": "reelle",
+    "PYTHONIOENCODING": "utf-8",
+}
+
 
 def titre(texte):
     print()
@@ -46,7 +55,7 @@ def arreter(message):
 
 def executer(commande, cwd=RACINE, silencieux=False):
     resultat = subprocess.run(
-        commande, cwd=str(cwd),
+        commande, cwd=str(cwd), env=ENVIRONNEMENT,
         capture_output=silencieux, text=True,
         encoding="utf-8", errors="replace",
     )
@@ -119,7 +128,7 @@ def main():
     executer([str(PYTHON), "-m", "pip", "install", "--upgrade", "pip", "-q"], silencieux=True)
     resultat = subprocess.run(
         [str(PYTHON), "-m", "pip", "install", "-r", "requirements.txt", "-q"],
-        cwd=str(RACINE), capture_output=True, text=True,
+        cwd=str(RACINE), env=ENVIRONNEMENT, capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
     if resultat.returncode != 0:

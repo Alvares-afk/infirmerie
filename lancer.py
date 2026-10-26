@@ -117,8 +117,20 @@ def main():
     threading.Thread(target=ouvrir_navigateur, args=(adresse, pret), daemon=True).start()
 
     manage = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manage.py")
+
+    # Sur un poste installé (clé de signature présente), l'application sert
+    # les VRAIS dossiers. Sans cela, un double-clic sur lancer.py ouvrirait
+    # la base de démonstration : les comptes créés à l'installation n'y sont
+    # pas, et la connexion échoue sans explication.
+    environnement = dict(os.environ)
+    if os.path.exists(os.path.join(os.path.dirname(manage), ".secret-key")):
+        environnement.setdefault("INFIRMERIE_BASE", "reelle")
+
     try:
-        return subprocess.call([sys.executable, manage, "runserver", "127.0.0.1:%d" % port])
+        return subprocess.call(
+            [sys.executable, manage, "runserver", "127.0.0.1:%d" % port],
+            env=environnement,
+        )
     except KeyboardInterrupt:
         return 0
 
