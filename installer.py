@@ -202,7 +202,8 @@ def main():
     print("  secretariat  secretariat   sans donnees cliniques")
     print("  admin        administration (/admin/)")
     print()
-    print("Pensez a planifier la sauvegarde : voir la section 4 de INSTALLATION.md")
+    print("Pensez a planifier la sauvegarde : installer_sauvegarde.bat")
+    print("(section 5 de INSTALLATION.md)")
     print()
     input("Appuyez sur Entree pour fermer cette fenetre...")
 
