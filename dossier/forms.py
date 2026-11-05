@@ -3,7 +3,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 
-from .models import Allergie, Bilan, Consultation, Mesure, Patient, Suivi
+from .models import Allergie, Bilan, Consultation, Mesure, Patient, RendezVous, Suivi
 
 
 class PatientForm(forms.ModelForm):
@@ -130,3 +130,38 @@ class SuiviForm(forms.ModelForm):
         model = Suivi
         fields = ["description", "echeance"]
         widgets = {"echeance": forms.DateInput(attrs={"type": "date"})}
+
+class RendezVousForm(forms.ModelForm):
+    """Rendez-vous : le patient est choisi dans une liste, jamais saisi à la main.
+
+    Un nom tapé librement créerait des rendez-vous orphelins, rattachés à
+    personne, et donc jamais visibles dans un dossier.
+    """
+
+    class Meta:
+        model = RendezVous
+        fields = ["patient", "date", "heure", "motif", "notes"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+            "heure": forms.TimeInput(attrs={"type": "time"}),
+            "notes": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["patient"].queryset = Patient.objects.order_by("nom", "prenom")
+
+    def clean(self):
+        donnees = super().clean()
+        date, heure = donnees.get("date"), donnees.get("heure")
+        if date and heure:
+            deja = RendezVous.objects.filter(
+                date=date, heure=heure, statut="prevu"
+            ).exclude(pk=self.instance.pk)
+            if deja.exists():
+                self.add_error(
+                    "heure",
+                    "Un autre rendez-vous est déjà prévu à cette heure. "
+                    "Choisissez un autre créneau.",
+                )
+        return donnees

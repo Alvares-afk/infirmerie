@@ -22,6 +22,10 @@ urlpatterns = [
     path("relances/<int:pk>/valider/", views.relance_valider, name="relance_valider"),
     path("relances/<int:pk>/abandonner/", views.relance_abandonner, name="relance_abandonner"),
 
+    path("rendez-vous/", views.liste_rendez_vous, name="liste_rendez_vous"),
+    path("rendez-vous/nouveau/", views.rendez_vous_create, name="rendez_vous_create"),
+    path("rendez-vous/<int:pk>/statut/", views.rendez_vous_statut, name="rendez_vous_statut"),
+
     path("patients/", views.liste_patients, name="liste_patients"),
     path("patients/nouveau/", views.patient_create, name="patient_create"),
     path("patients/<int:pk>/", views.patient_detail, name="patient_detail"),

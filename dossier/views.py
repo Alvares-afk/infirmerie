@@ -13,14 +13,17 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_http_methods
 
 from .forms import (
-    AllergieForm, BilanForm, ConsultationForm, MesureFormSet, PatientForm, SuiviForm,
+    AllergieForm, BilanForm, ConsultationForm, MesureFormSet, PatientForm,
+    RendezVousForm, SuiviForm,
 )
 from conf import settings
 from conf.bases import est_base_reelle
 
 from .audit import journaliser
 from .journalisation import Action
-from .models import Allergie, Bilan, Consultation, Mesure, Patient, Suivi
+from .models import (
+    Allergie, Bilan, Consultation, Mesure, Patient, RendezVous, StatutRdv, Suivi,
+)
 from .permissions import LIBELLE_ROLE, exiger_clinique, est_soignant, role_de
 
 
@@ -538,3 +541,74 @@ def synthese_patient(request, pk):
     response = HttpResponse(html)
     response["Content-Type"] = "text/html; charset=utf-8"
     return response
+
+# ------------------------------------------------------------ Rendez-vous
+
+
+@login_required
+def liste_rendez_vous(request):
+    """Agenda : ce qui arrive, puis ce qui est passé.
+
+    Le secrétariat y a accès : c'est son travail. Rien de clinique n'y
+    figure — un nom, une date, un motif écrit par la personne.
+    """
+    aujourdhui = timezone.localdate()
+
+    base_ouverte = (
+        RendezVous.objects.exclude(statut=StatutRdv.ANNULE).select_related("patient")
+    )
+    du_jour = base_ouverte.filter(date=aujourdhui).order_by("heure")
+    a_venir = base_ouverte.filter(date__gt=aujourdhui).order_by("date", "heure")[:40]
+    en_retard = base_ouverte.filter(
+        date__lt=aujourdhui, statut=StatutRdv.PREVU
+    ).order_by("date", "heure")
+    passe = (
+        RendezVous.objects.filter(date__lt=aujourdhui)
+        .select_related("patient")
+        .order_by("-date", "-heure")[:20]
+    )
+
+    journaliser(request, Action.LECTURE, objet="agenda des rendez-vous")
+    return render(request, "dossier/rendez_vous.html", {
+        "du_jour": du_jour,
+        "a_venir": a_venir,
+        "en_retard": en_retard,
+        "passe": passe,
+        "aujourdhui": aujourdhui,
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def rendez_vous_create(request):
+    initial = {}
+    patient_pk = request.GET.get("patient")
+    if patient_pk:
+        initial["patient"] = patient_pk
+
+    form = RendezVousForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        rdv = form.save()
+        journaliser(request, Action.CREATION, patient=rdv.patient, objet="rendez-vous")
+        messages.success(request, "Rendez-vous enregistré.")
+        return redirect("liste_rendez_vous")
+
+    return render(request, "dossier/rendez_vous_form.html", {"form": form})
+
+
+@login_required
+@require_http_methods(["POST"])
+def rendez_vous_statut(request, pk):
+    rdv = get_object_or_404(RendezVous, pk=pk)
+    statut = request.POST.get("statut", "")
+    if statut not in StatutRdv.values:
+        raise PermissionDenied("Statut inconnu.")
+
+    rdv.statut = statut
+    rdv.save(update_fields=["statut", "modifie_le"])
+    journaliser(
+        request, Action.MODIFICATION, patient=rdv.patient,
+        objet=f"rendez-vous {rdv.date:%d/%m/%Y} → {rdv.get_statut_display()}",
+    )
+    messages.success(request, f"Rendez-vous marqué « {rdv.get_statut_display()} ».")
+    return redirect("liste_rendez_vous")

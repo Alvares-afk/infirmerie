@@ -1,0 +1,28 @@
+{% comment %}
+Boutons de statut d'un rendez-vous. Inclus dans une boucle où la variable
+s'appelle « r ». Trois boutons, un par issue possible : le soignant tranche
+d'un clic, sans ouvrir une page de modification.
+{% endcomment %}
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+  {% if r.statut != "honore" %}
+  <form method="post" action="{% url 'rendez_vous_statut' r.pk %}" style="margin:0">
+    {% csrf_token %}
+    <input type="hidden" name="statut" value="honore">
+    <button type="submit" class="bouton" style="padding:4px 10px;font-size:12px">Honoré</button>
+  </form>
+  {% endif %}
+  {% if r.statut != "absent" %}
+  <form method="post" action="{% url 'rendez_vous_statut' r.pk %}" style="margin:0">
+    {% csrf_token %}
+    <input type="hidden" name="statut" value="absent">
+    <button type="submit" class="bouton secondaire" style="padding:4px 10px;font-size:12px">Absent</button>
+  </form>
+  {% endif %}
+  {% if r.statut != "annule" %}
+  <form method="post" action="{% url 'rendez_vous_statut' r.pk %}" style="margin:0">
+    {% csrf_token %}
+    <input type="hidden" name="statut" value="annule">
+    <button type="submit" class="bouton secondaire" style="padding:4px 10px;font-size:12px">Annuler</button>
+  </form>
+  {% endif %}
+</div>

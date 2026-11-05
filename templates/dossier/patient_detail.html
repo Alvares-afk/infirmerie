@@ -18,6 +18,7 @@
 
 <div class="barre-actions">
   <a href="{% url 'consultation_create' patient.pk %}" class="bouton">+ Nouvelle consultation</a>
+  <a href="{% url 'rendez_vous_create' %}?patient={{ patient.pk }}" class="bouton secondaire">Prendre rendez-vous</a>
   <a href="{% url 'synthese_patient' patient.pk %}" class="bouton secondaire">Synthèse (PDF)</a>
   <a href="{% url 'patient_edit' patient.pk %}" class="bouton secondaire">Modifier la fiche</a>
   <a href="{% url 'liste_patients' %}" class="bouton secondaire">← Retour</a>

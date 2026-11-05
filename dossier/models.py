@@ -504,3 +504,54 @@ class Signalement(models.Model):
 
     def __str__(self):
         return f"{self.libelle} ({self.nb_envois} envoi(s))"
+
+# ------------------------------------------------------------- Rendez-vous
+
+
+class StatutRdv(models.TextChoices):
+    PREVU = "prevu", "Prévu"
+    HONORE = "honore", "Honoré"
+    ABSENT = "absent", "Absent"
+    ANNULE = "annule", "Annulé"
+
+
+class RendezVous(models.Model):
+    """Un rendez-vous au cabinet.
+
+    Distinct d'une consultation : ici, la personne n'est pas encore venue.
+    Un rendez-vous honoré ne crée pas de consultation automatiquement — le
+    soignant décide, en séance, de ce qu'il note.
+    """
+
+    patient = models.ForeignKey(
+        "Patient", on_delete=models.CASCADE, related_name="rendez_vous",
+        verbose_name="patient",
+    )
+    date = models.DateField("date", default=timezone.localdate)
+    heure = models.TimeField("heure", null=True, blank=True)
+    motif = models.CharField("motif", max_length=200, blank=True)
+    statut = models.CharField(
+        "statut", max_length=20, choices=StatutRdv.choices, default=StatutRdv.PREVU
+    )
+    notes = models.TextField("notes", blank=True)
+
+    cree_le = models.DateTimeField("créé le", auto_now_add=True)
+    modifie_le = models.DateTimeField("modifié le", auto_now=True)
+
+    class Meta:
+        verbose_name = "rendez-vous"
+        verbose_name_plural = "rendez-vous"
+        ordering = ["date", "heure"]
+        indexes = [models.Index(fields=["date", "statut"])]
+
+    def __str__(self):
+        heure = f" {self.heure:%H:%M}" if self.heure else ""
+        return f"{self.date:%d/%m/%Y}{heure} — {self.patient}"
+
+    @property
+    def est_aujourdhui(self):
+        return self.date == timezone.localdate()
+
+    @property
+    def est_passe(self):
+        return self.date < timezone.localdate() and self.statut == StatutRdv.PREVU

@@ -1,0 +1,84 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Rendez-vous — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>Rendez-vous</h1>
+
+<div class="barre-actions">
+  <a href="{% url 'rendez_vous_create' %}" class="bouton">+ Nouveau rendez-vous</a>
+  <a href="{% url 'liste_patients' %}" class="bouton secondaire">Patients</a>
+</div>
+
+{% if en_retard %}
+<div class="carte alerte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">En retard — {{ en_retard|length }}</h2>
+  <p class="aide">Date passée, rendez-vous encore marqué « prévu ». À trancher : honoré, absent, ou annulé.</p>
+  <table>
+    <tr><th>Date</th><th>Heure</th><th>Patient</th><th>Motif</th><th></th></tr>
+    {% for r in en_retard %}
+    <tr>
+      <td>{{ r.date|date:"d/m/Y" }}</td>
+      <td>{{ r.heure|time:"H:i"|default:"—" }}</td>
+      <td><a href="{% url 'patient_detail' r.patient.pk %}">{{ r.patient.numero_dossier }}</a></td>
+      <td>{{ r.motif|default:"—" }}</td>
+      <td>{% include "dossier/_rdv_actions.html" %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<h2>Aujourd'hui — {{ aujourdhui|date:"d/m/Y" }}</h2>
+{% if du_jour %}
+<table>
+  <tr><th>Heure</th><th>Patient</th><th>Motif</th><th>Statut</th><th></th></tr>
+  {% for r in du_jour %}
+  <tr>
+    <td>{{ r.heure|time:"H:i"|default:"—" }}</td>
+    <td><a href="{% url 'patient_detail' r.patient.pk %}">{{ r.patient.numero_dossier }}</a> — {{ r.patient }}</td>
+    <td>{{ r.motif|default:"—" }}</td>
+    <td><span class="etiquette etiq-info">{{ r.get_statut_display }}</span></td>
+    <td>{% include "dossier/_rdv_actions.html" %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun rendez-vous aujourd'hui.</p>
+{% endif %}
+
+<h2>À venir</h2>
+{% if a_venir %}
+<table>
+  <tr><th>Date</th><th>Heure</th><th>Patient</th><th>Motif</th><th></th></tr>
+  {% for r in a_venir %}
+  <tr>
+    <td>{{ r.date|date:"d/m/Y" }}</td>
+    <td>{{ r.heure|time:"H:i"|default:"—" }}</td>
+    <td><a href="{% url 'patient_detail' r.patient.pk %}">{{ r.patient.numero_dossier }}</a> — {{ r.patient }}</td>
+    <td>{{ r.motif|default:"—" }}</td>
+    <td>{% include "dossier/_rdv_actions.html" %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun rendez-vous à venir.</p>
+{% endif %}
+
+<h2>Passés</h2>
+{% if passe %}
+<table>
+  <tr><th>Date</th><th>Heure</th><th>Patient</th><th>Motif</th><th>Statut</th></tr>
+  {% for r in passe %}
+  <tr>
+    <td>{{ r.date|date:"d/m/Y" }}</td>
+    <td>{{ r.heure|time:"H:i"|default:"—" }}</td>
+    <td><a href="{% url 'patient_detail' r.patient.pk %}">{{ r.patient.numero_dossier }}</a></td>
+    <td>{{ r.motif|default:"—" }}</td>
+    <td>{{ r.get_statut_display }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">Aucun rendez-vous passé.</p>
+{% endif %}
+
+{% endblock %}

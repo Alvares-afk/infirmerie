@@ -154,18 +154,18 @@
   .bouton.danger { background: var(--rouge); color: #fff; }
   .barre-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
 
-  form.champ { margin-bottom: 16px; }
-  form.champ label {
+  .champ { margin-bottom: 16px; }
+  .champ label {
     display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;
     color: var(--texte-doux); text-transform: uppercase; letter-spacing: .04em;
   }
-  form.champ input, form.champ select, form.champ textarea {
+  .champ input, .champ select, .champ textarea {
     width: 100%; padding: 9px 12px; border: 1px solid var(--bord-fort);
     border-radius: 9px; font-family: inherit; font-size: 14px;
     background: #170f0a; color: var(--texte);
   }
-  form.champ input::placeholder { color: rgba(218, 207, 194, .45); }
-  form.champ input:focus, form.champ select:focus, form.champ textarea:focus {
+  .champ input::placeholder { color: rgba(218, 207, 194, .45); }
+  .champ input:focus, .champ select:focus, .champ textarea:focus {
     outline: none; border-color: var(--cuivre);
     box-shadow: 0 0 0 3px rgba(200, 135, 74, .22);
   }
@@ -260,13 +260,13 @@
     color: var(--cuivre-clair);
   }
   :root[data-theme="clair"] .bouton.secondaire:hover { background: rgba(168, 103, 47, .10); }
-  :root[data-theme="clair"] form.champ input,
-  :root[data-theme="clair"] form.champ select,
-  :root[data-theme="clair"] form.champ textarea {
+  :root[data-theme="clair"] .champ input,
+  :root[data-theme="clair"] .champ select,
+  :root[data-theme="clair"] .champ textarea {
     background: #ffffff; color: var(--texte);
     border-color: rgba(36, 26, 18, .22);
   }
-  :root[data-theme="clair"] form.champ input::placeholder { color: rgba(107, 91, 77, .55); }
+  :root[data-theme="clair"] .champ input::placeholder { color: rgba(107, 91, 77, .55); }
   :root[data-theme="clair"] .erreurs {
     background: #fdecea; border-color: rgba(163, 35, 28, .35); color: #a3231c;
   }
@@ -296,8 +296,10 @@
 <header>
   <span class="marque">Infirmerie</span>
   <nav>
-    <a href="{% url 'accueil' %}">Accueil</a>
-    <a href="{% url 'liste_patients' %}">Patients</a>
+    <a href="{% url 'accueil' %}"{% if request.resolver_match.url_name == 'accueil' %} class="actif"{% endif %}>Accueil</a>
+    <a href="{% url 'liste_patients' %}"{% if request.resolver_match.url_name == 'liste_patients' %} class="actif"{% endif %}>Patients</a>
+    <a href="{% url 'liste_rendez_vous' %}"{% if request.resolver_match.url_name == 'liste_rendez_vous' %} class="actif"{% endif %}>Rendez-vous</a>
+    <a href="{% url 'liste_relances' %}"{% if request.resolver_match.url_name == 'liste_relances' %} class="actif"{% endif %}>Relances</a>
     <a href="/admin/">Administration</a>
   </nav>
   <span class="session">

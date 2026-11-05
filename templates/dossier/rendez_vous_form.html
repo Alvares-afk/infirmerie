@@ -1,0 +1,59 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Nouveau rendez-vous — Infirmerie{% endblock %}
+{% block contenu %}
+<h1>Nouveau rendez-vous</h1>
+
+<div class="barre-actions">
+  <a href="{% url 'liste_rendez_vous' %}" class="bouton secondaire">← Agenda</a>
+</div>
+
+<form method="post" class="carte">
+  {% csrf_token %}
+
+  {% if form.errors %}
+  <div class="erreurs">
+    <strong>Le formulaire contient des erreurs :</strong>
+    <ul>{% for f in form %}{% for e in f.errors %}<li>{{ f.label }} : {{ e }}</li>{% endfor %}{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <div class="champ">
+    <label for="id_patient">Patient *</label>
+    {{ form.patient }}
+    {% for e in form.patient.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}
+    <div class="aide">Le patient doit déjà avoir une fiche. <a href="{% url 'patient_create' %}">Créer une fiche</a>.</div>
+  </div>
+
+  <div class="deux-colonnes">
+    <div class="champ">
+      <label for="id_date">Date *</label>
+      {{ form.date }}
+      {% for e in form.date.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="champ">
+      <label for="id_heure">Heure</label>
+      {{ form.heure }}
+      {% for e in form.heure.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}
+      <div class="aide">Laisser vide si l'heure n'est pas fixée.</div>
+    </div>
+  </div>
+
+  <div class="champ">
+    <label for="id_motif">Motif</label>
+    {{ form.motif }}
+    {% for e in form.motif.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}
+    <div class="aide">Ce que la personne vient faire : pansement, contrôle, vaccination…</div>
+  </div>
+
+  <div class="champ">
+    <label for="id_notes">Notes</label>
+    {{ form.notes }}
+    {% for e in form.notes.errors %}<div class="aide" style="color:#b00020">{{ e }}</div>{% endfor %}
+  </div>
+
+  <div class="barre-actions">
+    <button type="submit" class="bouton">Enregistrer</button>
+  </div>
+</form>
+
+{% endblock %}
