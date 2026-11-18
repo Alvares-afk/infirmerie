@@ -38,3 +38,6 @@ demarrer_demo.bat export-ignore
 *.pdf binary
 *.woff2 binary
 *.zip binary
+
+# Scripts de l'exploitant : chemins propres a son poste, inutiles au client.
+exploitation/ export-ignore
