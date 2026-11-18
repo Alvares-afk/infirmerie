@@ -22,6 +22,8 @@ urlpatterns = [
     path("relances/<int:pk>/valider/", views.relance_valider, name="relance_valider"),
     path("relances/<int:pk>/abandonner/", views.relance_abandonner, name="relance_abandonner"),
 
+    path("agent/", views.agent_revue, name="agent_revue"),
+    path("agent/<int:pk>/annuler/", views.agent_annuler, name="agent_annuler"),
     path("rendez-vous/", views.liste_rendez_vous, name="liste_rendez_vous"),
     path("rendez-vous/nouveau/", views.rendez_vous_create, name="rendez_vous_create"),
     path("rendez-vous/<int:pk>/statut/", views.rendez_vous_statut, name="rendez_vous_statut"),

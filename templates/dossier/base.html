@@ -300,6 +300,7 @@
     <a href="{% url 'liste_patients' %}"{% if request.resolver_match.url_name == 'liste_patients' %} class="actif"{% endif %}>Patients</a>
     <a href="{% url 'liste_rendez_vous' %}"{% if request.resolver_match.url_name == 'liste_rendez_vous' %} class="actif"{% endif %}>Rendez-vous</a>
     <a href="{% url 'liste_relances' %}"{% if request.resolver_match.url_name == 'liste_relances' %} class="actif"{% endif %}>Relances</a>
+    {% if user.is_authenticated %}<a href="{% url 'agent_revue' %}"{% if request.resolver_match.url_name == 'agent_revue' %} class="actif"{% endif %}>Agent</a>{% endif %}
     <a href="/admin/">Administration</a>
   </nav>
   <span class="session">

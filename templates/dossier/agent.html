@@ -1,0 +1,62 @@
+{% extends "dossier/base.html" %}
+{% block titre %}Agent — ce qu'il a décidé{% endblock %}
+{% block contenu %}
+<h1>Ce que l'agent a décidé</h1>
+
+<p class="aide" style="max-width:70ch">
+  L'agent applique des règles écrites, choisit dans un catalogue fermé, et
+  trace chaque décision. Il ne peut ni envoyer un message à un patient, ni
+  modifier un dossier, ni supprimer : ces actions ne sont pas dans son
+  catalogue.
+</p>
+
+<div class="barre-actions">
+  <span class="etiquette etiq-inconnu">{{ nb_simulation }} en simulation</span>
+  <span class="etiquette etiq-info">{{ nb_appliquees }} appliquée(s)</span>
+</div>
+
+{% if decisions %}
+<table>
+  <tr>
+    <th>Quand</th><th>Mode</th><th>Patient</th><th>Règle</th>
+    <th>Décision</th><th>Motif</th><th></th>
+  </tr>
+  {% for d in decisions %}
+  <tr>
+    <td>{{ d.cree_le|date:"d/m H:i" }}</td>
+    <td>
+      {% if d.mode == "simulation" %}
+        <span class="etiquette etiq-inconnu">simulation</span>
+      {% else %}
+        <span class="etiquette etiq-info">appliquée</span>
+      {% endif %}
+    </td>
+    <td>
+      {% if d.patient %}
+        <a href="{% url 'patient_detail' d.patient.pk %}">{{ d.patient.numero_dossier }}</a>
+      {% else %}—{% endif %}
+    </td>
+    <td><code>{{ d.regle }}</code></td>
+    <td>{{ d.resume }}</td>
+    <td class="aide">{{ d.motif }}</td>
+    <td>
+      {% if d.est_annulee %}
+        <span class="aide">annulée</span>
+      {% elif d.mode == "appliquee" and d.reversible %}
+        <form method="post" action="{% url 'agent_annuler' d.pk %}" style="margin:0">
+          {% csrf_token %}
+          <button type="submit" class="bouton secondaire" style="padding:4px 10px;font-size:12px">Annuler</button>
+        </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="vide">
+  Aucune décision enregistrée. Lancez <code>manage.py agent_decision</code>
+  en simulation : il écrira ce qu'il ferait, sans rien appliquer.
+</p>
+{% endif %}
+
+{% endblock %}

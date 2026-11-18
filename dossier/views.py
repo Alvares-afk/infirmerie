@@ -22,7 +22,8 @@ from conf.bases import est_base_reelle
 from .audit import journaliser
 from .journalisation import Action
 from .models import (
-    Allergie, Bilan, Consultation, Mesure, Patient, RendezVous, StatutRdv, Suivi,
+    Allergie, Bilan, Consultation, DecisionAgent, Mesure, Patient, Relance,
+    RendezVous, StatutRelance, StatutRdv, Suivi,
 )
 from .permissions import LIBELLE_ROLE, exiger_clinique, est_soignant, role_de
 
@@ -612,3 +613,56 @@ def rendez_vous_statut(request, pk):
     )
     messages.success(request, f"Rendez-vous marqué « {rdv.get_statut_display()} ».")
     return redirect("liste_rendez_vous")
+
+# ------------------------------------------------------------------- agent
+
+
+@login_required
+def agent_revue(request):
+    """Ce que l'agent a décidé, et ce qu'on peut encore annuler."""
+    exiger_clinique(request.user)
+    journaliser(request, Action.LECTURE, objet="revue de l'agent")
+    return render(request, "dossier/agent.html", {
+        "decisions": DecisionAgent.objects.select_related("patient")[:60],
+        "nb_simulation": DecisionAgent.objects.filter(mode="simulation").count(),
+        "nb_appliquees": DecisionAgent.objects.filter(mode="appliquee").count(),
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+def agent_annuler(request, pk):
+    """Annule une décision réversible et retire ce qu'elle a créé.
+
+    Seul un brouillon de relance est retiré, et seulement s'il est encore
+    en brouillon : si un soignant l'a validé entre-temps, il a pris la
+    décision, l'agent n'a plus la main.
+    """
+    exiger_clinique(request.user)
+    decision = get_object_or_404(DecisionAgent, pk=pk)
+
+    if decision.est_annulee:
+        messages.info(request, "Cette décision était déjà annulée.")
+        return redirect("agent_revue")
+    if not decision.reversible:
+        raise PermissionDenied("Cette décision n'est pas réversible.")
+
+    if decision.objet_cree.startswith("relance#"):
+        try:
+            identifiant = int(decision.objet_cree.split("#")[1])
+        except (IndexError, ValueError):
+            identifiant = None
+        if identifiant:
+            Relance.objects.filter(
+                pk=identifiant, statut=StatutRelance.BROUILLON
+            ).delete()
+
+    decision.annulee_le = timezone.now()
+    decision.save(update_fields=["annulee_le"])
+    journaliser(
+        request, Action.SUPPRESSION, patient=decision.patient,
+        objet="annulation d'une décision de l'agent",
+        details=f"{decision.regle} / {decision.action}",
+    )
+    messages.success(request, "Décision annulée et brouillon retiré.")
+    return redirect("agent_revue")

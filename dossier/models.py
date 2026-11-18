@@ -555,3 +555,52 @@ class RendezVous(models.Model):
     @property
     def est_passe(self):
         return self.date < timezone.localdate() and self.statut == StatutRdv.PREVU
+
+# ------------------------------------------------------- Decisions de l'agent
+
+
+class ModeDecision(models.TextChoices):
+    SIMULATION = "simulation", "Simulation"
+    APPLIQUEE = "appliquee", "Appliquée"
+
+
+class DecisionAgent(models.Model):
+    """Trace d'une décision prise par l'agent.
+
+    Écrite aussi en simulation : c'est ainsi qu'on compare, au bout de deux
+    semaines, ce que l'agent aurait fait avec ce qu'un soignant a fait.
+
+    Une décision ne se supprime pas : elle s'annule (`annulee_le`), ce qui
+    laisse voir qu'elle a existé et qu'on l'a retirée.
+    """
+
+    cree_le = models.DateTimeField("prise le", auto_now_add=True, db_index=True)
+    regle = models.CharField("règle appliquée", max_length=80)
+    action = models.CharField("action", max_length=40)
+    classe = models.CharField("classe", max_length=1, default="A")
+    patient = models.ForeignKey(
+        "Patient", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="decisions_agent", verbose_name="patient",
+    )
+    resume = models.CharField("résumé", max_length=240)
+    motif = models.CharField("motif", max_length=240, blank=True)
+    mode = models.CharField(
+        "mode", max_length=20, choices=ModeDecision.choices,
+        default=ModeDecision.SIMULATION,
+    )
+    reversible = models.BooleanField("réversible", default=True)
+    objet_cree = models.CharField("objet créé", max_length=120, blank=True)
+    annulee_le = models.DateTimeField("annulée le", null=True, blank=True)
+
+    class Meta:
+        verbose_name = "décision de l'agent"
+        verbose_name_plural = "décisions de l'agent"
+        ordering = ["-cree_le"]
+        indexes = [models.Index(fields=["-cree_le", "mode"])]
+
+    def __str__(self):
+        return f"{self.cree_le:%d/%m/%Y %H:%M} — {self.resume[:60]}"
+
+    @property
+    def est_annulee(self):
+        return self.annulee_le is not None
