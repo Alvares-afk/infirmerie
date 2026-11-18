@@ -27,6 +27,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--avec-classe-b", dest="avec_classe_b", action="store_true",
+            help="Inclut les actions cliniques réversibles (programmer un "
+                 "contrôle). Désactivé par défaut : l'autonomie se donne "
+                 "classe par classe.",
+        )
+        parser.add_argument(
             "--appliquer", action="store_true",
             help="Exécute réellement les actions de classe A. Sans cette "
                  "option, tout est enregistré en simulation.",
@@ -35,6 +41,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         mode = ModeDecision.APPLIQUEE if options["appliquer"] else ModeDecision.SIMULATION
         a_faire = decisions()
+        if not options["avec_classe_b"]:
+            exclues = [d for d in a_faire if d.action.classe != "A"]
+            a_faire = [d for d in a_faire if d.action.classe == "A"]
+            if exclues:
+                self.stdout.write(
+                    f"{len(exclues)} décision(s) de classe B écartée(s) : "
+                    "relancer avec --avec-classe-b pour les inclure."
+                )
 
         self.stdout.write(
             f"Règles évaluées : {len(a_faire)} décision(s) — mode "

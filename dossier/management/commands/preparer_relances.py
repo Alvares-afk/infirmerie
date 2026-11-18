@@ -112,8 +112,10 @@ class Command(BaseCommand):
                 if dernier is None:
                     continue
                 for mesure in dernier.mesures.all():
-                    etat = getattr(mesure, "interpretation", None)
-                    if etat not in ("haut", "bas"):
+                    # « anormalite » est la propriété qui compare la valeur
+                    # aux bornes du laboratoire. Lire un attribut inexistant
+                    # rendait cette option silencieusement inopérante.
+                    if mesure.anormalite not in ("haut", "bas"):
                         continue
                     a_preparer.append({
                         "patient": patient,

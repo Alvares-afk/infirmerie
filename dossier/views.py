@@ -657,6 +657,15 @@ def agent_annuler(request, pk):
                 pk=identifiant, statut=StatutRelance.BROUILLON
             ).delete()
 
+    if decision.objet_cree.startswith("suivi#"):
+        try:
+            identifiant = int(decision.objet_cree.split("#")[1])
+        except (IndexError, ValueError):
+            identifiant = None
+        if identifiant:
+            # Un suivi déjà marqué fait ne s'efface pas : quelqu'un l'a traité.
+            Suivi.objects.filter(pk=identifiant, fait=False).delete()
+
     decision.annulee_le = timezone.now()
     decision.save(update_fields=["annulee_le"])
     journaliser(

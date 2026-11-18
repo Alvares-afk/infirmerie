@@ -26,6 +26,19 @@ from .models import Bilan, Patient, Relance, StatutRelance, Suivi, TypeRelance
 
 DELAI_BILAN = 365
 
+# Délais de contrôle proposés après une valeur hors bornes, en jours.
+# Ce sont des valeurs de départ, à confirmer par le praticien : la règle
+# médicale n'est pas dans ce fichier, elle est dans le mandat.
+DELAIS_CONTROLE = [
+    ("ferritine", 21),
+    ("hémoglobine", 21),
+    ("hemoglobine", 21),
+    ("tsh", 42),
+    ("glyc", 90),
+    ("hba1c", 90),
+]
+DELAI_CONTROLE_DEFAUT = 90
+
 
 @dataclass(frozen=True)
 class Action:
@@ -53,6 +66,13 @@ CATALOGUE = {
             reversible=True,
             effet="Crée un brouillon de relance, en attente de validation.",
         ),
+        Action(
+            code="suivi_controle",
+            libelle="Programmer un contrôle après une valeur hors bornes",
+            classe="B",
+            reversible=True,
+            effet="Crée un suivi à échéance. Annulable tant qu'il n'est pas fait.",
+        ),
     ]
 }
 
@@ -65,6 +85,7 @@ class Decision:
     resume: str
     motif: str
     corps: str
+    delai_jours: int = 0
 
     @property
     def cle(self):
@@ -114,7 +135,63 @@ def _bilans_anciens(aujourdhui):
         )
 
 
-REGLES = [_suivis_en_retard, _bilans_anciens]
+def _delai_pour(parametre):
+    nom = (parametre or "").lower()
+    for cle, jours in DELAIS_CONTROLE:
+        if cle in nom:
+            return jours
+    return DELAI_CONTROLE_DEFAUT
+
+
+def _mesures_hors_bornes(aujourdhui):
+    """Une décision par patient, sur la valeur la plus parlante du dernier bilan.
+
+    Une seule par patient, volontairement : trois valeurs anormales ne
+    justifient pas trois contrôles séparés, et l'agent n'a pas à trancher
+    laquelle compte. Il propose le contrôle, le soignant décide de la suite.
+    """
+    for patient in Patient.objects.all():
+        dernier = (
+            Bilan.objects.filter(consultation__patient=patient)
+            .order_by("-date").first()
+        )
+        if dernier is None:
+            continue
+
+        mesure = next(
+            (m for m in dernier.mesures.all() if m.anormalite in ("haut", "bas")),
+            None,
+        )
+        if mesure is None:
+            continue
+
+        jours = _delai_pour(mesure.parametre)
+        echeance = aujourdhui + timedelta(days=jours)
+        description = (
+            f"Contrôle de {mesure.parametre} "
+            f"({mesure.valeur} {mesure.unite}) — prévu le {echeance:%d/%m/%Y}"
+        )
+        if Suivi.objects.filter(
+            patient=patient, description__startswith=f"Contrôle de {mesure.parametre}",
+            fait=False,
+        ).exists():
+            continue
+
+        yield Decision(
+            regle="mesure_hors_bornes",
+            action=CATALOGUE["suivi_controle"],
+            patient=patient,
+            resume=f"Contrôle de {mesure.parametre} sous {jours} jours",
+            motif=(
+                f"{mesure.parametre} {mesure.valeur} {mesure.unite} "
+                f"({mesure.libelle_anomalie}) au bilan du {dernier.date:%d/%m/%Y}."
+            ),
+            corps="",
+            delai_jours=jours,
+        )
+
+
+REGLES = [_suivis_en_retard, _bilans_anciens, _mesures_hors_bornes]
 
 
 # -------------------------------------------------------------- execution
@@ -167,6 +244,14 @@ def appliquer(decision):
         raise ValueError(f"Action de classe {action.classe} : exécution interdite.")
     if not action.reversible:
         raise ValueError("Action irréversible : elle exige une validation humaine.")
+
+    if action.code == "suivi_controle":
+        suivi = Suivi.objects.create(
+            patient=decision.patient,
+            description=decision.resume[:300],
+            echeance=timezone.localdate() + timedelta(days=decision.delai_jours or DELAI_CONTROLE_DEFAUT),
+        )
+        return f"suivi#{suivi.pk}"
 
     type_relance = (
         TypeRelance.BILAN if action.code == "relance_bilan" else TypeRelance.SOIN

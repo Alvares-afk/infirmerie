@@ -19,7 +19,8 @@ from django.core.management import call_command
 
 from dossier.agent import CATALOGUE, Action, Decision, appliquer, decisions
 from dossier.models import (
-    Bilan, Consultation, DecisionAgent, Patient, Relance, StatutRelance, Suivi,
+    Bilan, Consultation, DecisionAgent, Mesure, Patient, Relance, StatutRelance,
+    Suivi,
 )
 
 
@@ -121,6 +122,60 @@ class SocleAgent(TestCase):
         self.client.post(reverse("agent_annuler", args=[decision.pk]))
 
         self.assertTrue(Relance.objects.filter(pk=relance.pk).exists())
+
+    # ------------------------------------------------------- classe B
+    def _bilan_avec_ferritine_basse(self):
+        consultation = Consultation.objects.create(patient=self.patient)
+        bilan = Bilan.objects.create(
+            consultation=consultation, date=timezone.localdate() - timedelta(days=5)
+        )
+        Mesure.objects.create(
+            bilan=bilan, parametre="Ferritine", valeur="18", unite="µg/L",
+            norme_min=30, norme_max=300,
+        )
+        return bilan
+
+    def test_classe_b_ecartee_par_defaut(self):
+        self._bilan_avec_ferritine_basse()
+        sortie = self._commande("--appliquer")
+        self.assertIn("classe B écartée", sortie)
+        self.assertFalse(
+            Suivi.objects.filter(description__startswith="Contrôle de Ferritine").exists()
+        )
+
+    def test_classe_b_programme_un_controle_a_la_bonne_echeance(self):
+        self._bilan_avec_ferritine_basse()
+        self._commande("--appliquer", "--avec-classe-b")
+
+        suivi = Suivi.objects.get(description__startswith="Contrôle de Ferritine")
+        attendu = timezone.localdate() + timedelta(days=21)  # ferritine : 3 semaines
+        self.assertEqual(suivi.echeance, attendu)
+        self.assertFalse(suivi.fait)
+
+    def test_annulation_retire_le_suivi_cree(self):
+        self._bilan_avec_ferritine_basse()
+        self._commande("--appliquer", "--avec-classe-b")
+        decision = DecisionAgent.objects.filter(action="suivi_controle").first()
+
+        self.client.force_login(self.soignant)
+        self.client.post(reverse("agent_annuler", args=[decision.pk]))
+
+        self.assertFalse(
+            Suivi.objects.filter(description__startswith="Contrôle de Ferritine").exists()
+        )
+
+    def test_annulation_ne_supprime_pas_un_suivi_deja_fait(self):
+        self._bilan_avec_ferritine_basse()
+        self._commande("--appliquer", "--avec-classe-b")
+        decision = DecisionAgent.objects.filter(action="suivi_controle").first()
+        suivi = Suivi.objects.get(description__startswith="Contrôle de Ferritine")
+        suivi.fait = True
+        suivi.save()
+
+        self.client.force_login(self.soignant)
+        self.client.post(reverse("agent_annuler", args=[decision.pk]))
+
+        self.assertTrue(Suivi.objects.filter(pk=suivi.pk).exists())
 
     def test_page_de_revue_reservee_aux_soignants(self):
         self.client.force_login(self.soignant)
